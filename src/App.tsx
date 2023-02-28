@@ -13,6 +13,8 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
+import OpenAPIClientAxios from "openapi-client-axios";
+import { OpenAPIV3 } from "openapi-types";
 
 function App() {
   const [data, setData] = useState([]);
@@ -32,7 +34,7 @@ function App() {
     debugTable: true,
   });
 
-  const tableContainerRef = useRef<HTMLDivElement>(null);
+  const refOpenApiDef = useRef<HTMLTextAreaElement>(null);
 
   const { rows } = table.getRowModel();
   const parentRef = useRef<HTMLDivElement>(null);
@@ -48,7 +50,17 @@ function App() {
     if (data.length && columns.length) setLoading(false);
   }, [data, columns]);
 
-  function handleLoadAPI() {}
+  function handleLoadAPI() {
+    const definition: OpenAPIV3.Document = JSON.parse(
+      refOpenApiDef.current.value
+    );
+    const api = new OpenAPIClientAxios({
+      definition: definition,
+    });
+    api.init().then(() => {
+      console.log(api);
+    });
+  }
 
   function handlePaste(e: ClipboardEvent<HTMLTextAreaElement>): void {
     let text = e.clipboardData.getData("text/plain");
@@ -84,13 +96,22 @@ function App() {
             id="OpenApiUrl"
             type="url"
             placeholder="https://api.trakstudios.com/v1/openapi.json"
-            required={true}
           />
         </div>
         <div className="py-2 grow-0">
           <Button type="submit" onClick={() => handleLoadAPI()}>
             Load API
           </Button>
+        </div>
+      </div>
+      <div className="flex flex-row justify-center items-end space-x-4">
+        <div className="py-2 grow">
+          <Textarea
+            ref={refOpenApiDef}
+            id="OpenApiText"
+            placeholder="Open Api Json..."
+            rows={4}
+          />
         </div>
       </div>
 
