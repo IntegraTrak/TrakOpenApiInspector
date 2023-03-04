@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, ClipboardEvent } from "react";
+import { useState, useRef, useEffect, ClipboardEvent, Fragment } from "react";
 import reactLogo from "./assets/react.svg";
 import "./App.css";
 import {
@@ -93,22 +93,22 @@ function App() {
   }
 
   function getPropertyOption(property: any, prefix: string = "") {
-    if (property[1].type != "object")
+    if (property[1].type != "object") {
+      let propertyValue = `${prefix}${property[0]}`;
       return (
-        <option key={property[0]} value={property[0]}>
-          {prefix}
-          {property[0]}
+        <option key={propertyValue} value={propertyValue}>
+          {propertyValue}
         </option>
       );
-    else
+    } else
       return (
-        <optgroup key={property[0]} label={property[0]}>
+        <Fragment>
           {Object.entries(property[1].properties)
             .filter((subProperty: any) => !subProperty[1].readOnly)
             .map((subProperty) =>
-              getPropertyOption(subProperty, property[0] + ".")
+              getPropertyOption(subProperty, prefix + property[0] + ".")
             )}
-        </optgroup>
+        </Fragment>
       );
   }
 
@@ -248,7 +248,7 @@ function App() {
                           {selectedOperator.requestBody &&
                             getSelectedOperationRequestProperties()
                               .filter((property: any) => !property[1].readOnly)
-                              .map((property: any, propertyId) =>
+                              .map((property: any) =>
                                 getPropertyOption(property)
                               )}
                         </Select>
