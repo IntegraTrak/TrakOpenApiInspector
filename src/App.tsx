@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, ClipboardEvent } from "react";
 import reactLogo from "./assets/react.svg";
 import "./App.css";
-import { TextInput, Label, Button, Textarea } from "flowbite-react";
+import { TextInput, Label, Button, Textarea, Select } from "flowbite-react";
 import Papa from "papaparse";
 import {
   createColumnHelper,
@@ -13,7 +13,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import OpenAPIClientAxios from "openapi-client-axios";
+import { OpenAPIClientAxios, Operation } from "openapi-client-axios";
 import { OpenAPIV3 } from "openapi-types";
 
 function App() {
@@ -21,6 +21,10 @@ function App() {
   const [columns, setColumns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sorting, setSorting] = useState<SortingState>([]);
+  const [operators, setOperators] = useState([] as Operation[]);
+  const [selectedOperator, setSelectedOperator] = useState(
+    null as unknown as Operation
+  );
 
   const table = useReactTable({
     data,
@@ -34,6 +38,7 @@ function App() {
     debugTable: true,
   });
 
+  const refOpenApiUri = useRef<HTMLInputElement>(null);
   const refOpenApiDef = useRef<HTMLTextAreaElement>(null);
 
   const { rows } = table.getRowModel();
@@ -51,14 +56,19 @@ function App() {
   }, [data, columns]);
 
   function handleLoadAPI() {
-    const definition: OpenAPIV3.Document = JSON.parse(
-      refOpenApiDef.current.value
-    );
+    //const definition: OpenAPIV3.Document = JSON.parse(
+    //  refOpenApiDef.current.value
+    //);
+
+    const definition: string = refOpenApiUri!.current!.value;
     const api = new OpenAPIClientAxios({
       definition: definition,
     });
     api.init().then(() => {
       console.log(api);
+      const o = api.getOperations();
+      console.log(o);
+      setOperators(o);
     });
   }
 
@@ -69,15 +79,27 @@ function App() {
     Papa.parse(text, {
       header: true,
       skipEmptyLines: true,
-      complete: function (results) {
+      complete: function (results: any) {
         setData(results.data);
         setColumns(makeColumns(results.meta.fields));
       },
     });
   }
 
-  function makeColumns(rawColumns) {
-    return rawColumns.map((column) => {
+  const operationChange = (event: {
+    target: { value: string | undefined };
+  }) => {
+    if (event.target.value) {
+      const operation: Operation = operators.filter(
+        (operation) => operation.operationId == event.target.value
+      )[0];
+      setSelectedOperator(operation);
+      console.log(operation);
+    }
+  };
+
+  function makeColumns(rawColumns: any) {
+    return rawColumns.map((column: any) => {
       return { header: column, accessorKey: column };
     });
   }
@@ -93,6 +115,7 @@ function App() {
             className="bg-blue-100"
           />
           <TextInput
+            ref={refOpenApiUri}
             id="OpenApiUrl"
             type="url"
             placeholder="https://api.trakstudios.com/v1/openapi.json"
@@ -112,6 +135,29 @@ function App() {
             placeholder="Open Api Json..."
             rows={4}
           />
+        </div>
+      </div>
+      <div className="flex flex-row justify-center items-end space-x-4">
+        <div className="py-2 grow">
+          <div id="select">
+            <div className="mb-2 block">
+              <Label htmlFor="operation" value="Select operation" />
+            </div>
+            <Select id="operation" required={true} onChange={operationChange}>
+              {operators
+                .filter(
+                  (operation) =>
+                    operation.method == "post" ||
+                    operation.method == "put" ||
+                    operation.method == "delete"
+                )
+                .map((operation, operationId) => (
+                  <option key={operationId} value={operation.operationId}>
+                    {operation.operationId}
+                  </option>
+                ))}
+            </Select>
+          </div>
         </div>
       </div>
 
