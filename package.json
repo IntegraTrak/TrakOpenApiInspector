@@ -11,6 +11,7 @@
   "dependencies": {
     "@tanstack/react-table": "^8.7.9",
     "@tanstack/react-virtual": "^3.0.0-beta.49",
+    "@types/papaparse": "^5.3.7",
     "flowbite": "^1.6.3",
     "flowbite-react": "^0.3.8",
     "openapi-client-axios": "^7.1.1",
