@@ -202,8 +202,8 @@ function App() {
         </div>
       </div>
 
-      {!loading && operatorSelected && (
-        <div>
+      <div>
+        {!loading && operatorSelected && selectedOperator.parameters && (
           <div>
             <Table>
               <Table.Head>
@@ -229,7 +229,8 @@ function App() {
               </Table.Body>
             </Table>
           </div>
-
+        )}
+        {!loading && operatorSelected && selectedOperator.requestBody && (
           <div>
             <Table>
               <Table.Head>
@@ -244,11 +245,12 @@ function App() {
                       <Table.Cell>
                         <Select>
                           <option>Skip</option>
-                          {getSelectedOperationRequestProperties()
-                            .filter((property: any) => !property[1].readOnly)
-                            .map((property: any, propertyId) =>
-                              getPropertyOption(property)
-                            )}
+                          {selectedOperator.requestBody &&
+                            getSelectedOperationRequestProperties()
+                              .filter((property: any) => !property[1].readOnly)
+                              .map((property: any, propertyId) =>
+                                getPropertyOption(property)
+                              )}
                         </Select>
                       </Table.Cell>
                     </Table.Row>
@@ -256,8 +258,8 @@ function App() {
               </Table.Body>
             </Table>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       <div id="textarea">
         <div className="mb-2 block">
