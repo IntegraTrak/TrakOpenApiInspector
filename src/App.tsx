@@ -1,14 +1,20 @@
 import { useState, useRef, useEffect, ClipboardEvent } from "react";
 import reactLogo from "./assets/react.svg";
 import "./App.css";
-import { TextInput, Label, Button, Textarea, Select } from "flowbite-react";
+import {
+  TextInput,
+  Label,
+  Button,
+  Textarea,
+  Select,
+  Table,
+} from "flowbite-react";
 import Papa from "papaparse";
 import {
   createColumnHelper,
   flexRender,
   getCoreRowModel,
   getSortedRowModel,
-  Row,
   SortingState,
   useReactTable,
 } from "@tanstack/react-table";
@@ -25,6 +31,7 @@ function App() {
   const [selectedOperator, setSelectedOperator] = useState(
     null as unknown as Operation
   );
+  const [operatorSelected, setOperatorSelected] = useState(false);
 
   const table = useReactTable({
     data,
@@ -56,20 +63,53 @@ function App() {
   }, [data, columns]);
 
   function handleLoadAPI() {
-    //const definition: OpenAPIV3.Document = JSON.parse(
-    //  refOpenApiDef.current.value
-    //);
-
-    const definition: string = refOpenApiUri!.current!.value;
     const api = new OpenAPIClientAxios({
-      definition: definition,
+      definition: getApiDefinition(),
     });
     api.init().then(() => {
       console.log(api);
-      const o = api.getOperations();
-      console.log(o);
-      setOperators(o);
+      setOperators(api.getOperations());
     });
+  }
+
+  function getApiDefinition() {
+    let definition: string | OpenAPIV3.Document = refOpenApiUri!.current!.value;
+    if (definition == "") {
+      definition = JSON.parse(refOpenApiDef!.current!.value);
+    }
+    return definition;
+  }
+
+  function getSelectedOperationRequestProperties() {
+    return (
+      selectedOperator.requestBody &&
+      selectedOperator.requestBody.content["application/json"].schema
+        .properties &&
+      Object.entries(
+        selectedOperator.requestBody.content["application/json"].schema
+          .properties
+      )
+    );
+  }
+
+  function getPropertyOption(property: any, prefix: string = "") {
+    if (property[1].type != "object")
+      return (
+        <option key={property[0]} value={property[0]}>
+          {prefix}
+          {property[0]}
+        </option>
+      );
+    else
+      return (
+        <optgroup key={property[0]} label={property[0]}>
+          {Object.entries(property[1].properties)
+            .filter((subProperty: any) => !subProperty[1].readOnly)
+            .map((subProperty) =>
+              getPropertyOption(subProperty, property[0] + ".")
+            )}
+        </optgroup>
+      );
   }
 
   function handlePaste(e: ClipboardEvent<HTMLTextAreaElement>): void {
@@ -94,6 +134,7 @@ function App() {
         (operation) => operation.operationId == event.target.value
       )[0];
       setSelectedOperator(operation);
+      setOperatorSelected(true);
       console.log(operation);
     }
   };
@@ -160,6 +201,63 @@ function App() {
           </div>
         </div>
       </div>
+
+      {!loading && operatorSelected && (
+        <div>
+          <div>
+            <Table>
+              <Table.Head>
+                <Table.HeadCell>Import Field</Table.HeadCell>
+                <Table.HeadCell>Parameters</Table.HeadCell>
+              </Table.Head>
+              <Table.Body className="divide-y">
+                {selectedOperator.parameters &&
+                  selectedOperator!.parameters!.map((parameter) => (
+                    <Table.Row className="bg-white dark:border-gray-700 dark:bg-gray-800">
+                      <Table.Cell>
+                        <Select>
+                          <option></option>
+                          {columns &&
+                            columns.map((column) => (
+                              <option>{column.header}</option>
+                            ))}
+                        </Select>
+                      </Table.Cell>
+                      <Table.Cell>{parameter.name}</Table.Cell>
+                    </Table.Row>
+                  ))}
+              </Table.Body>
+            </Table>
+          </div>
+
+          <div>
+            <Table>
+              <Table.Head>
+                <Table.HeadCell>Import Field</Table.HeadCell>
+                <Table.HeadCell>Request Field</Table.HeadCell>
+              </Table.Head>
+              <Table.Body className="divide-y">
+                {columns &&
+                  columns.map((column) => (
+                    <Table.Row className="bg-white dark:border-gray-700 dark:bg-gray-800">
+                      <Table.Cell>{column.header}</Table.Cell>
+                      <Table.Cell>
+                        <Select>
+                          <option>Skip</option>
+                          {getSelectedOperationRequestProperties()
+                            .filter((property: any) => !property[1].readOnly)
+                            .map((property: any, propertyId) =>
+                              getPropertyOption(property)
+                            )}
+                        </Select>
+                      </Table.Cell>
+                    </Table.Row>
+                  ))}
+              </Table.Body>
+            </Table>
+          </div>
+        </div>
+      )}
 
       <div id="textarea">
         <div className="mb-2 block">
