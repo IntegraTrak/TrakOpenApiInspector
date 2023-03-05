@@ -12,6 +12,7 @@ import {
 import { OpenAPIClientAxios, Operation } from "openapi-client-axios";
 import { OpenAPIV3 } from "openapi-types";
 
+// @ts-ignore
 export default function OpenApiDefinition({ onOperationsSet }) {
   const refOpenApiUri = useRef<HTMLInputElement>(null);
   const refOpenApiDef = useRef<HTMLTextAreaElement>(null);

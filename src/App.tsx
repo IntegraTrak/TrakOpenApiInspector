@@ -82,15 +82,15 @@ function App() {
   }
 
   function getSelectedOperationRequestProperties() {
-    return (
+    if (
       selectedOperator.requestBody &&
-      selectedOperator.requestBody.content["application/json"].schema
-        .properties &&
-      Object.entries(
-        selectedOperator.requestBody.content["application/json"].schema
-          .properties
-      )
-    );
+      "content" in selectedOperator.requestBody
+    ) {
+      let requestBodyContentJsonSchema =
+        selectedOperator.requestBody.content["application/json"].schema;
+      // @ts-ignore
+      return requestBodyContentJsonSchema.properties;
+    }
   }
 
   function getPropertyOption(property: any, prefix: string = "") {
@@ -193,11 +193,16 @@ function App() {
                           <option></option>
                           {columns &&
                             columns.map((column) => (
-                              <option>{column.header}</option>
+                              <option>{column["header"]}</option>
                             ))}
                         </Select>
                       </Table.Cell>
-                      <Table.Cell>{parameter.name}</Table.Cell>
+                      <Table.Cell>
+                        {
+                          // @ts-ignore
+                          parameter.name
+                        }
+                      </Table.Cell>
                     </Table.Row>
                   ))}
               </Table.Body>
@@ -215,7 +220,7 @@ function App() {
                 {columns &&
                   columns.map((column) => (
                     <Table.Row className="bg-white dark:border-gray-700 dark:bg-gray-800">
-                      <Table.Cell>{column.header}</Table.Cell>
+                      <Table.Cell>{column["header"]}</Table.Cell>
                       <Table.Cell>
                         <Select>
                           <option>Skip</option>
