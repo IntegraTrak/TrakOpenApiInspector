@@ -10,76 +10,29 @@ import {
   Table,
 } from "flowbite-react";
 import Papa from "papaparse";
-import {
-  createColumnHelper,
-  flexRender,
-  getCoreRowModel,
-  getSortedRowModel,
-  SortingState,
-  useReactTable,
-} from "@tanstack/react-table";
-import { useVirtualizer } from "@tanstack/react-virtual";
+
 import { OpenAPIClientAxios, Operation } from "openapi-client-axios";
 import { OpenAPIV3 } from "openapi-types";
 import OpenApiDefinition from "./components/OpenApiDefinition";
+import CsvDataTable from "./components/CsvDataTable";
 
 function App() {
   const [data, setData] = useState([]);
   const [columns, setColumns] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [sorting, setSorting] = useState<SortingState>([]);
+
   const [operators, setOperators] = useState([] as Operation[]);
   const [selectedOperator, setSelectedOperator] = useState(
     null as unknown as Operation
   );
   const [operatorSelected, setOperatorSelected] = useState(false);
 
-  const table = useReactTable({
-    data,
-    columns,
-    state: {
-      sorting,
-    },
-    onSortingChange: setSorting,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    debugTable: true,
-  });
-
   const refOpenApiUri = useRef<HTMLInputElement>(null);
   const refOpenApiDef = useRef<HTMLTextAreaElement>(null);
-
-  const { rows } = table.getRowModel();
-  const parentRef = useRef<HTMLDivElement>(null);
-
-  const virtualizer = useVirtualizer({
-    count: rows.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => 34,
-    overscan: 20,
-  });
 
   useEffect(() => {
     if (data.length && columns.length) setLoading(false);
   }, [data, columns]);
-
-  function handleLoadAPI() {
-    const api = new OpenAPIClientAxios({
-      definition: getApiDefinition(),
-    });
-    api.init().then(() => {
-      console.log(api);
-      setOperators(api.getOperations());
-    });
-  }
-
-  function getApiDefinition() {
-    let definition: string | OpenAPIV3.Document = refOpenApiUri!.current!.value;
-    if (definition == "") {
-      definition = JSON.parse(refOpenApiDef!.current!.value);
-    }
-    return definition;
-  }
 
   function getSelectedOperationRequestProperties() {
     if (
@@ -89,7 +42,7 @@ function App() {
       let requestBodyContentJsonSchema =
         selectedOperator.requestBody.content["application/json"].schema;
       // @ts-ignore
-      return requestBodyContentJsonSchema.properties;
+      return Object.entries(requestBodyContentJsonSchema.properties);
     }
   }
 
@@ -253,77 +206,7 @@ function App() {
         />
       </div>
 
-      {!loading && (
-        <div ref={parentRef} className="container">
-          <div style={{ height: `${virtualizer.getTotalSize()}px` }}>
-            <table>
-              <thead>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <tr key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => {
-                      return (
-                        <th
-                          key={header.id}
-                          colSpan={header.colSpan}
-                          style={{ width: header.getSize() }}
-                        >
-                          {header.isPlaceholder ? null : (
-                            <div
-                              {...{
-                                className: header.column.getCanSort()
-                                  ? "cursor-pointer select-none"
-                                  : "",
-                                onClick:
-                                  header.column.getToggleSortingHandler(),
-                              }}
-                            >
-                              {flexRender(
-                                header.column.columnDef.header,
-                                header.getContext()
-                              )}
-                              {{
-                                asc: " 🔼",
-                                desc: " 🔽",
-                              }[header.column.getIsSorted() as string] ?? null}
-                            </div>
-                          )}
-                        </th>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </thead>
-              <tbody>
-                {virtualizer.getVirtualItems().map((virtualRow, index) => {
-                  const row = rows[virtualRow.index];
-                  return (
-                    <tr
-                      key={row.id}
-                      style={{
-                        height: `${virtualRow.size}px`,
-                        transform: `translateY(${
-                          virtualRow.start - index * virtualRow.size
-                        }px)`,
-                      }}
-                    >
-                      {row.getVisibleCells().map((cell) => {
-                        return (
-                          <td key={cell.id}>
-                            {flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext()
-                            )}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+      {!loading && <CsvDataTable data={data} columns={columns} />}
     </div>
   );
 }
