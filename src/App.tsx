@@ -21,6 +21,7 @@ import {
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { OpenAPIClientAxios, Operation } from "openapi-client-axios";
 import { OpenAPIV3 } from "openapi-types";
+import OpenApiDefinition from "./components/OpenApiDefinition";
 
 function App() {
   const [data, setData] = useState([]);
@@ -148,36 +149,9 @@ function App() {
   return (
     <div>
       <h1 className="text-3xl font-bold">Trak OpenApi Inspector</h1>
-      <div className="flex flex-row justify-center items-end space-x-4">
-        <div className="py-2 grow">
-          <Label
-            htmlFor="OpenApiUrl"
-            value="OpenApi Url"
-            className="bg-blue-100"
-          />
-          <TextInput
-            ref={refOpenApiUri}
-            id="OpenApiUrl"
-            type="url"
-            placeholder="https://api.trakstudios.com/v1/openapi.json"
-          />
-        </div>
-        <div className="py-2 grow-0">
-          <Button type="submit" onClick={() => handleLoadAPI()}>
-            Load API
-          </Button>
-        </div>
-      </div>
-      <div className="flex flex-row justify-center items-end space-x-4">
-        <div className="py-2 grow">
-          <Textarea
-            ref={refOpenApiDef}
-            id="OpenApiText"
-            placeholder="Open Api Json..."
-            rows={4}
-          />
-        </div>
-      </div>
+
+      <OpenApiDefinition onOperationsSet={setOperators} />
+
       <div className="flex flex-row justify-center items-end space-x-4">
         <div className="py-2 grow">
           <div id="select">
