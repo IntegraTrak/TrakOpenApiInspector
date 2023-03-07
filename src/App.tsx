@@ -48,7 +48,8 @@ function App() {
 
   function getSelectedOperationRequestProperties() {
     if (
-      selectedOperator!.requestBody &&
+      selectedOperator &&
+      selectedOperator.requestBody &&
       "content" in selectedOperator!.requestBody
     ) {
       let requestBodyContentJsonSchema =
