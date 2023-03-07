@@ -149,26 +149,25 @@ function App() {
                 <Table.HeadCell>Parameters</Table.HeadCell>
               </Table.Head>
               <Table.Body className="divide-y">
-                {selectedOperator.parameters &&
-                  selectedOperator.parameters!.map((parameter) => (
-                    <Table.Row className="bg-white dark:border-gray-700 dark:bg-gray-800">
-                      <Table.Cell>
-                        <Select>
-                          <option></option>
-                          {columns &&
-                            columns.map((column) => (
-                              <option>{column["header"]}</option>
-                            ))}
-                        </Select>
-                      </Table.Cell>
-                      <Table.Cell>
-                        {
-                          // @ts-ignore
-                          parameter.name
-                        }
-                      </Table.Cell>
-                    </Table.Row>
-                  ))}
+                {selectedOperator.parameters.map((parameter) => (
+                  <Table.Row className="bg-white dark:border-gray-700 dark:bg-gray-800">
+                    <Table.Cell>
+                      <Select>
+                        <option></option>
+                        {columns &&
+                          columns.map((column) => (
+                            <option>{column["header"]}</option>
+                          ))}
+                      </Select>
+                    </Table.Cell>
+                    <Table.Cell>
+                      {
+                        // @ts-ignore
+                        parameter.name
+                      }
+                    </Table.Cell>
+                  </Table.Row>
+                ))}
               </Table.Body>
             </Table>
           </div>
@@ -188,12 +187,11 @@ function App() {
                       <Table.Cell>
                         <Select>
                           <option>Skip</option>
-                          {selectedOperator.requestBody &&
-                            getSelectedOperationRequestProperties()
-                              .filter((property: any) => !property[1].readOnly)
-                              .map((property: any) =>
-                                getPropertyOption(property)
-                              )}
+                          {getSelectedOperationRequestProperties()
+                            .filter((property: any) => !property[1].readOnly)
+                            .map((property: any) =>
+                              getPropertyOption(property)
+                            )}
                         </Select>
                       </Table.Cell>
                     </Table.Row>
