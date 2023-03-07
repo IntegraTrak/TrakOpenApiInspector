@@ -9,31 +9,19 @@ import {
   Table,
 } from "flowbite-react";
 
-import { OpenAPIClientAxios, Operation } from "openapi-client-axios";
 import { OpenAPIV3 } from "openapi-types";
 
 // @ts-ignore
-export default function OpenApiDefinition({ onOperationsSet }) {
+export default function OpenApiDefinition({ onHandleLoadApi }) {
   const refOpenApiUri = useRef<HTMLInputElement>(null);
   const refOpenApiDef = useRef<HTMLTextAreaElement>(null);
-
-  function handleLoadAPI() {
-    const api = new OpenAPIClientAxios({
-      definition: getApiDefinition(),
-    });
-    api.init().then(() => {
-      console.log(api);
-      console.log(onOperationsSet);
-
-      onOperationsSet(api.getOperations());
-    });
-  }
 
   function getApiDefinition() {
     let definition: string | OpenAPIV3.Document = refOpenApiUri!.current!.value;
     if (definition == "") {
       definition = JSON.parse(refOpenApiDef!.current!.value);
     }
+    console.log(definition);
     return definition;
   }
 
@@ -54,7 +42,10 @@ export default function OpenApiDefinition({ onOperationsSet }) {
           />
         </div>
         <div className="py-2 grow-0">
-          <Button type="submit" onClick={() => handleLoadAPI()}>
+          <Button
+            type="submit"
+            onClick={() => onHandleLoadApi(getApiDefinition())}
+          >
             Load API
           </Button>
         </div>

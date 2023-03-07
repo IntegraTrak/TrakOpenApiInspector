@@ -21,14 +21,26 @@ function App() {
   const [columns, setColumns] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const [operators, setOperators] = useState([] as Operation[]);
-  const [selectedOperator, setSelectedOperator] = useState(
-    null as unknown as Operation
-  );
-  const [operatorSelected, setOperatorSelected] = useState(false);
+  const [api, setApi] = useState<OpenAPIClientAxios>();
+  const [operators, setOperators] = useState<Operation[]>([]);
+  const [selectedOperator, setSelectedOperator] = useState<Operation>();
 
-  const refOpenApiUri = useRef<HTMLInputElement>(null);
-  const refOpenApiDef = useRef<HTMLTextAreaElement>(null);
+  function handleLoadAPI(definition: string | OpenAPIV3.Document) {
+    const api = new OpenAPIClientAxios({
+      definition,
+    });
+    api.init().then(() => {
+      console.log(api);
+      setApi(api);
+      setOperators(api.getOperations());
+    });
+  }
+
+  function importData() {
+    data.map((row) => {
+      console.log(row);
+    });
+  }
 
   useEffect(() => {
     if (data.length && columns.length) setLoading(false);
@@ -36,14 +48,14 @@ function App() {
 
   function getSelectedOperationRequestProperties() {
     if (
-      selectedOperator.requestBody &&
-      "content" in selectedOperator.requestBody
+      selectedOperator!.requestBody &&
+      "content" in selectedOperator!.requestBody
     ) {
       let requestBodyContentJsonSchema =
-        selectedOperator.requestBody.content["application/json"].schema;
+        selectedOperator!.requestBody.content["application/json"].schema;
       // @ts-ignore
       return Object.entries(requestBodyContentJsonSchema.properties);
-    }
+    } else return [];
   }
 
   function getPropertyOption(property: any, prefix: string = "") {
@@ -88,7 +100,6 @@ function App() {
         (operation) => operation.operationId == event.target.value
       )[0];
       setSelectedOperator(operation);
-      setOperatorSelected(true);
       console.log(operation);
     }
   };
@@ -103,7 +114,7 @@ function App() {
     <div>
       <h1 className="text-3xl font-bold">Trak OpenApi Inspector</h1>
 
-      <OpenApiDefinition onOperationsSet={setOperators} />
+      <OpenApiDefinition onHandleLoadApi={handleLoadAPI} />
 
       <div className="flex flex-row justify-center items-end space-x-4">
         <div className="py-2 grow">
@@ -130,7 +141,7 @@ function App() {
       </div>
 
       <div>
-        {!loading && operatorSelected && selectedOperator.parameters && (
+        {!loading && selectedOperator && selectedOperator.parameters && (
           <div>
             <Table>
               <Table.Head>
@@ -139,7 +150,7 @@ function App() {
               </Table.Head>
               <Table.Body className="divide-y">
                 {selectedOperator.parameters &&
-                  selectedOperator!.parameters!.map((parameter) => (
+                  selectedOperator.parameters!.map((parameter) => (
                     <Table.Row className="bg-white dark:border-gray-700 dark:bg-gray-800">
                       <Table.Cell>
                         <Select>
@@ -162,7 +173,7 @@ function App() {
             </Table>
           </div>
         )}
-        {!loading && operatorSelected && selectedOperator.requestBody && (
+        {!loading && selectedOperator && selectedOperator.requestBody && (
           <div>
             <Table>
               <Table.Head>
@@ -191,6 +202,14 @@ function App() {
             </Table>
           </div>
         )}
+      </div>
+
+      <div className="flex flex-row justify-end items-end space-x-4">
+        <div className="py-2 grow-0">
+          <Button type="submit" onClick={() => importData()}>
+            Import Data
+          </Button>
+        </div>
       </div>
 
       <div id="textarea">
