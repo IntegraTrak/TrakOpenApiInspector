@@ -25,6 +25,23 @@ function App() {
   const [operators, setOperators] = useState<Operation[]>([]);
   const [selectedOperator, setSelectedOperator] = useState<Operation>();
 
+  const parametersRef = useRef<Map<string, HTMLSelectElement> | null>(null);
+  const requestFieldsRef = useRef<Map<string, HTMLSelectElement> | null>(null);
+
+  function getParametersMap(): Map<string, HTMLSelectElement> {
+    if (!parametersRef.current) {
+      parametersRef.current = new Map<string, HTMLSelectElement>();
+    }
+    return parametersRef.current;
+  }
+
+  function getRequestFieldsMap(): Map<string, HTMLSelectElement> {
+    if (!requestFieldsRef.current) {
+      requestFieldsRef.current = new Map<string, HTMLSelectElement>();
+    }
+    return requestFieldsRef.current;
+  }
+
   function handleLoadAPI(definition: string | OpenAPIV3.Document) {
     const api = new OpenAPIClientAxios({
       definition,
@@ -37,6 +54,20 @@ function App() {
   }
 
   function importData() {
+    let parameterMap = getParametersMap();
+    if (parameterMap) {
+      parameterMap.forEach((value, key) => {
+        console.log(`${key}: ${value.value}`);
+      });
+    }
+
+    let requestFieldMap = getRequestFieldsMap();
+    if (requestFieldMap) {
+      requestFieldMap.forEach((value, key) => {
+        console.log(`${key}: ${value.value}`);
+      });
+    }
+
     data.map((row) => {
       console.log(row);
     });
@@ -93,9 +124,9 @@ function App() {
     });
   }
 
-  const operationChange = (event: {
+  function operationChange(event: {
     target: { value: string | undefined };
-  }) => {
+  }): void {
     if (event.target.value) {
       const operation: Operation = operators.filter(
         (operation) => operation.operationId == event.target.value
@@ -103,7 +134,7 @@ function App() {
       setSelectedOperator(operation);
       console.log(operation);
     }
-  };
+  }
 
   function makeColumns(rawColumns: any) {
     return rawColumns.map((column: any) => {
@@ -119,28 +150,25 @@ function App() {
 
       <div className="flex flex-row justify-center items-end space-x-4">
         <div className="py-2 grow">
-          <div id="select">
-            <div className="mb-2 block">
-              <Label htmlFor="operation" value="Select operation" />
-            </div>
-            <Select id="operation" required={true} onChange={operationChange}>
-              {operators
-                .filter(
-                  (operation) =>
-                    operation.method == "post" ||
-                    operation.method == "put" ||
-                    operation.method == "delete"
-                )
-                .map((operation, operationId) => (
-                  <option key={operationId} value={operation.operationId}>
-                    {operation.operationId}
-                  </option>
-                ))}
-            </Select>
+          <div className="mb-2 block">
+            <Label htmlFor="operation" value="Select operation" />
           </div>
+          <Select id="operation" required={true} onChange={operationChange}>
+            {operators
+              .filter(
+                (operation) =>
+                  operation.method == "post" ||
+                  operation.method == "put" ||
+                  operation.method == "delete"
+              )
+              .map((operation, operationId) => (
+                <option key={operationId} value={operation.operationId}>
+                  {operation.operationId}
+                </option>
+              ))}
+          </Select>
         </div>
       </div>
-
       <div>
         {!loading && selectedOperator && selectedOperator.parameters && (
           <div>
@@ -153,12 +181,31 @@ function App() {
                 {selectedOperator.parameters.map((parameter) => (
                   <Table.Row className="bg-white dark:border-gray-700 dark:bg-gray-800">
                     <Table.Cell>
-                      <Select>
+                      <Select
+                        key={
+                          // @ts-ignore
+                          parameter.name
+                        }
+                        ref={(node) => {
+                          const map = getParametersMap();
+                          if (node) {
+                            // @ts-ignore
+                            map.set(parameter.name, node);
+                          } else {
+                            // @ts-ignore
+                            map.delete(parameter.name);
+                          }
+                        }}
+                      >
                         <option></option>
-                        {columns &&
-                          columns.map((column) => (
-                            <option>{column["header"]}</option>
-                          ))}
+                        {columns?.map((column) => (
+                          <option
+                            id={column["header"]}
+                            value={column["header"]}
+                          >
+                            {column["header"]}
+                          </option>
+                        ))}
                       </Select>
                     </Table.Cell>
                     <Table.Cell>
@@ -181,22 +228,29 @@ function App() {
                 <Table.HeadCell>Request Field</Table.HeadCell>
               </Table.Head>
               <Table.Body className="divide-y">
-                {columns &&
-                  columns.map((column) => (
-                    <Table.Row className="bg-white dark:border-gray-700 dark:bg-gray-800">
-                      <Table.Cell>{column["header"]}</Table.Cell>
-                      <Table.Cell>
-                        <Select>
-                          <option>Skip</option>
-                          {getSelectedOperationRequestProperties()
-                            .filter((property: any) => !property[1].readOnly)
-                            .map((property: any) =>
-                              getPropertyOption(property)
-                            )}
-                        </Select>
-                      </Table.Cell>
-                    </Table.Row>
-                  ))}
+                {columns?.map((column) => (
+                  <Table.Row className="bg-white dark:border-gray-700 dark:bg-gray-800">
+                    <Table.Cell>{column["header"]}</Table.Cell>
+                    <Table.Cell>
+                      <Select
+                        key={column["header"]}
+                        ref={(node) => {
+                          const map = getRequestFieldsMap();
+                          if (node) {
+                            map.set(column["header"], node);
+                          } else {
+                            map.delete(column["header"]);
+                          }
+                        }}
+                      >
+                        <option>Skip</option>
+                        {getSelectedOperationRequestProperties()
+                          .filter((property: any) => !property[1].readOnly)
+                          .map((property: any) => getPropertyOption(property))}
+                      </Select>
+                    </Table.Cell>
+                  </Table.Row>
+                ))}
               </Table.Body>
             </Table>
           </div>
