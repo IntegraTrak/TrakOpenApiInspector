@@ -9,7 +9,13 @@ import {
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
 
-export default function CsvDataTable({ data, columns }) {
+export default function CsvDataTable({
+  data,
+  columns,
+}: {
+  data: any[];
+  columns: any[];
+}) {
   const [sorting, setSorting] = useState<SortingState>([]);
 
   const table = useReactTable({

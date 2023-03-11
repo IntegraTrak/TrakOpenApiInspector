@@ -45,6 +45,9 @@ export function Import() {
   function handleLoadAPI(definition: string | OpenAPIV3.Document) {
     const api = new OpenAPIClientAxios({
       definition: definition,
+      axiosConfigDefaults: {
+        withCredentials: true,
+      },
     });
     api.init().then((client) => {
       console.log(api);
@@ -85,7 +88,8 @@ export function Import() {
           parameters = set(parameters, `${key}`, row[value.value]);
         });
 
-        let path = selectedOperator?.path as string;
+        const path = selectedOperator!.path as string;
+        const apiClientPath = apiClient!.paths[path];
         console.log(path);
         console.log(selectedOperator?.method);
         console.log(parameters);
@@ -93,7 +97,8 @@ export function Import() {
         switch (selectedOperator?.method) {
           case "post":
             {
-              apiClient.paths[path]
+              // @ts-ignore
+              apiClientPath
                 .post(undefined, requestBody)
                 .then((response: any) => {
                   console.log(response);
@@ -101,14 +106,14 @@ export function Import() {
             }
             break;
           case "put": {
-            apiClient.paths[path]
-              .put(parameters, requestBody)
-              .then((response: any) => {
-                console.log(response);
-              });
+            // @ts-ignore
+            apiClientPath.put(parameters, requestBody).then((response: any) => {
+              console.log(response);
+            });
           }
           case "delete": {
-            apiClient.paths[path].put(parameters).then((response: any) => {
+            // @ts-ignore
+            apiClientPath.delete(parameters).then((response: any) => {
               console.log(response);
             });
           }
