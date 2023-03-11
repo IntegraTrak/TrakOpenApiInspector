@@ -22,7 +22,7 @@ export function MapFields({
   getRequestFieldsMap,
   importData,
 }: MapFieldsProps) {
-  function getSelectedOperationRequestProperties() {
+  function getSelectedOperationRequestProperties(): [string, unknown][] {
     if (
       selectedOperator &&
       selectedOperator.requestBody &&
@@ -35,7 +35,7 @@ export function MapFields({
     } else return [];
   }
 
-  function getPropertyOption(property: any, prefix: string = "") {
+  function getPropertyOption(property: any, prefix: string = ""): JSX.Element {
     if (property[1].type != "object") {
       let propertyValue = `${prefix}${property[0]}`;
       return (
