@@ -4,22 +4,19 @@ import { Operation } from "openapi-client-axios";
 
 interface SelectOperatorProps {
   operators: Operation[];
+  allowedMethods: string[];
   operationChange: (event: React.ChangeEvent<HTMLSelectElement>) => void;
 }
 
 export function SelectOperator({
   operators,
+  allowedMethods,
   operationChange,
 }: SelectOperatorProps) {
   return (
     <Select id="operation" required={true} onChange={operationChange}>
       {operators
-        .filter(
-          (operation) =>
-            operation.method == "post" ||
-            operation.method == "put" ||
-            operation.method == "delete"
-        )
+        .filter((operation) => allowedMethods.includes(operation.method))
         .map((operation, operationId) => (
           <option key={operationId} value={operation.operationId}>
             {operation.operationId}
