@@ -1,6 +1,13 @@
 import { SelectOperator } from "./components/SelectOperator";
 import { MapFields } from "./components/MapFields";
-import { useState, useRef, useEffect, ClipboardEvent, Fragment } from "react";
+import {
+  useState,
+  useRef,
+  useEffect,
+  ClipboardEvent,
+  Fragment,
+  ChangeEvent,
+} from "react";
 import { Label, Textarea } from "flowbite-react";
 import Papa from "papaparse";
 import { set } from "radash";
@@ -11,6 +18,7 @@ import {
   OpenAPIClientAxios,
   OpenAPIClient,
   Operation,
+  AxiosRequestHeaders,
 } from "openapi-client-axios";
 import { OpenAPIV3 } from "openapi-types";
 import OpenApiDefinition from "./components/OpenApiDefinition";
@@ -22,6 +30,7 @@ export function Import() {
   const [loading, setLoading] = useState(true);
 
   const [api, setApi] = useState<OpenAPIClientAxios>();
+  const [headers, setHeaders] = useState<AxiosRequestHeaders>();
   const [operators, setOperators] = useState<Operation[]>([]);
   const [selectedOperator, setSelectedOperator] = useState<Operation>();
 
@@ -45,9 +54,6 @@ export function Import() {
   function handleLoadAPI(definition: string | OpenAPIV3.Document) {
     const api = new OpenAPIClientAxios({
       definition: definition,
-      axiosConfigDefaults: {
-        withCredentials: true,
-      },
     });
     api.init().then((client) => {
       console.log(api);
@@ -99,7 +105,7 @@ export function Import() {
             {
               // @ts-ignore
               apiClientPath
-                .post(undefined, requestBody)
+                .post(undefined, requestBody, { headers })
                 .then((response: any) => {
                   console.log(response);
                 });
@@ -107,15 +113,19 @@ export function Import() {
             break;
           case "put": {
             // @ts-ignore
-            apiClientPath.put(parameters, requestBody).then((response: any) => {
-              console.log(response);
-            });
+            apiClientPath
+              .put(parameters, requestBody, { headers })
+              .then((response: any) => {
+                console.log(response);
+              });
           }
           case "delete": {
             // @ts-ignore
-            apiClientPath.delete(parameters).then((response: any) => {
-              console.log(response);
-            });
+            apiClientPath
+              .delete(parameters, null, { headers })
+              .then((response: any) => {
+                console.log(response);
+              });
           }
         }
       });
@@ -125,6 +135,14 @@ export function Import() {
   useEffect(() => {
     if (data.length && columns.length) setLoading(false);
   }, [data, columns]);
+
+  function onAuthHeaderChange(e: ChangeEvent<HTMLTextAreaElement>): void {
+    // @ts-ignore
+    let headers: AxiosRequestHeaders = {
+      Authorization: e.target.value,
+    };
+    setHeaders(headers);
+  }
 
   function handlePaste(e: ClipboardEvent<HTMLTextAreaElement>): void {
     let text = e.clipboardData.getData("text/plain");
@@ -170,8 +188,24 @@ export function Import() {
             <Label htmlFor="operation" value="Select operation" />
           </div>
           <SelectOperator
+            allowedMethods={["post", "put", "delete"]}
             operators={operators}
             operationChange={operationChange}
+          />
+        </div>
+      </div>
+
+      <div className="flex flex-row justify-center items-end space-x-4">
+        <div className="py-2 grow">
+          <div className="mb-2 block">
+            <Label htmlFor="AuthHeader" value="Authorization Header" />
+          </div>
+          <Textarea
+            id="AuthHeader"
+            placeholder="Auth..."
+            required={true}
+            rows={4}
+            onChange={(e) => onAuthHeaderChange(e)}
           />
         </div>
       </div>
