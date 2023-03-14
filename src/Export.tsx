@@ -1,23 +1,20 @@
-import { SelectOperator } from "./components/SelectOperator";
-import { MapFields } from "./components/MapFields";
-import { useState, useRef, useEffect, ChangeEvent } from "react";
-import { Label, Textarea } from "flowbite-react";
-import Papa from "papaparse";
-import { set } from "radash";
+import { useState, useRef, useEffect, ChangeEvent } from 'react';
+import { Label, Textarea } from 'flowbite-react';
+import { set } from 'radash';
 
-import "./App.css";
+import './App.css';
 
 import {
   OpenAPIClientAxios,
-  OpenAPIClient,
   Operation,
   AxiosRequestHeaders,
-} from "openapi-client-axios";
-import { OpenAPIV3 } from "openapi-types";
-import OpenApiDefinition from "./components/OpenApiDefinition";
-import CsvDataTable from "./components/CsvDataTable";
+} from 'openapi-client-axios';
+import { OpenAPIV3 } from 'openapi-types';
+import OpenApiDefinition from './components/OpenApiDefinition';
+import CsvDataTable from './components/CsvDataTable';
+import { SelectOperator } from './components/SelectOperator';
 
-export function Export() {
+export default function Export() {
   const [data, setData] = useState([]);
   const [columns, setColumns] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -30,28 +27,14 @@ export function Export() {
   const parametersRef = useRef<Map<string, HTMLSelectElement> | null>(null);
   const requestFieldsRef = useRef<Map<string, HTMLSelectElement> | null>(null);
 
-  function getParametersMap(): Map<string, HTMLSelectElement> {
-    if (!parametersRef.current) {
-      parametersRef.current = new Map<string, HTMLSelectElement>();
-    }
-    return parametersRef.current;
-  }
-
-  function getRequestFieldsMap(): Map<string, HTMLSelectElement> {
-    if (!requestFieldsRef.current) {
-      requestFieldsRef.current = new Map<string, HTMLSelectElement>();
-    }
-    return requestFieldsRef.current;
-  }
-
   function handleLoadAPI(definition: string | OpenAPIV3.Document) {
-    const api = new OpenAPIClientAxios({
-      definition: definition,
+    const localApi = new OpenAPIClientAxios({
+      definition,
     });
-    api.init().then((client) => {
-      console.log(api);
-      setApi(api);
-      setOperators(api.getOperations());
+    localApi.init().then(() => {
+      console.log(localApi);
+      setApi(localApi);
+      setOperators(localApi.getOperations());
     });
   }
 
@@ -61,7 +44,7 @@ export function Export() {
 
   function onAuthHeaderChange(e: ChangeEvent<HTMLTextAreaElement>): void {
     // @ts-ignore
-    let headers: AxiosRequestHeaders = {
+    const headers: AxiosRequestHeaders = {
       Authorization: e.target.value,
     };
     setHeaders(headers);
@@ -79,12 +62,6 @@ export function Export() {
     }
   }
 
-  function makeColumns(rawColumns: any) {
-    return rawColumns.map((column: any) => {
-      return { header: column, accessorKey: column };
-    });
-  }
-
   return (
     <div>
       <h1 className="text-3xl font-bold">Trak OpenApi Inspector</h1>
@@ -98,7 +75,7 @@ export function Export() {
           </div>
           <SelectOperator
             operators={operators}
-            allowedMethods={["get"]}
+            allowedMethods={['get']}
             operationChange={operationChange}
           />
         </div>
@@ -112,7 +89,7 @@ export function Export() {
           <Textarea
             id="AuthHeader"
             placeholder="Auth..."
-            required={true}
+            required
             rows={4}
             onChange={(e) => onAuthHeaderChange(e)}
           />

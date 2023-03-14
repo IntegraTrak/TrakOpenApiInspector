@@ -1,30 +1,28 @@
-import { SelectOperator } from "./components/SelectOperator";
-import { MapFields } from "./components/MapFields";
 import {
   useState,
   useRef,
   useEffect,
   ClipboardEvent,
-  Fragment,
   ChangeEvent,
-} from "react";
-import { Label, Textarea } from "flowbite-react";
-import Papa from "papaparse";
-import { set } from "radash";
+} from 'react';
+import { Label, Textarea } from 'flowbite-react';
+import Papa from 'papaparse';
+import { set } from 'radash';
 
-import "./App.css";
+import './App.css';
 
 import {
   OpenAPIClientAxios,
-  OpenAPIClient,
   Operation,
   AxiosRequestHeaders,
-} from "openapi-client-axios";
-import { OpenAPIV3 } from "openapi-types";
-import OpenApiDefinition from "./components/OpenApiDefinition";
-import CsvDataTable from "./components/CsvDataTable";
+} from 'openapi-client-axios';
+import { OpenAPIV3 } from 'openapi-types';
+import OpenApiDefinition from './components/OpenApiDefinition';
+import CsvDataTable from './components/CsvDataTable';
+import { SelectOperator } from './components/SelectOperator';
+import { MapFields } from './components/MapFields';
 
-export function Import() {
+export default function Import() {
   const [data, setData] = useState([]);
   const [columns, setColumns] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -52,38 +50,38 @@ export function Import() {
   }
 
   function handleLoadAPI(definition: string | OpenAPIV3.Document) {
-    const api = new OpenAPIClientAxios({
-      definition: definition,
+    const localApi = new OpenAPIClientAxios({
+      definition,
     });
-    api.init().then((client) => {
-      console.log(api);
-      setApi(api);
-      setOperators(api.getOperations());
+    localApi.init().then((client) => {
+      console.log(localApi);
+      setApi(localApi);
+      setOperators(localApi.getOperations());
     });
   }
 
   function importData() {
-    let parameterMap = getParametersMap();
+    const parameterMap = getParametersMap();
     if (parameterMap) {
       parameterMap.forEach((value, key) => {
         console.log(`${key}: ${value.value}`);
       });
     }
 
-    let requestFieldMap = getRequestFieldsMap();
+    const requestFieldMap = getRequestFieldsMap();
 
     api!.init().then((apiClient) => {
       let requestBody: any = {};
       data.map((row) => {
         columns.map((colName) => {
-          let requestFieldValue = requestFieldMap.get(
-            colName["accessorKey"]
+          const requestFieldValue = requestFieldMap.get(
+            colName.accessorKey
           )!.value;
-          if (requestFieldValue != "Skip") {
+          if (requestFieldValue != 'Skip') {
             requestBody = set(
               requestBody,
               `${requestFieldValue}`,
-              row[colName["accessorKey"]]
+              row[colName.accessorKey]
             );
           }
         });
@@ -101,7 +99,7 @@ export function Import() {
         console.log(parameters);
 
         switch (selectedOperator?.method) {
-          case "post":
+          case 'post':
             {
               // @ts-ignore
               apiClientPath
@@ -111,7 +109,7 @@ export function Import() {
                 });
             }
             break;
-          case "put": {
+          case 'put': {
             // @ts-ignore
             apiClientPath
               .put(parameters, requestBody, { headers })
@@ -119,7 +117,7 @@ export function Import() {
                 console.log(response);
               });
           }
-          case "delete": {
+          case 'delete': {
             // @ts-ignore
             apiClientPath
               .delete(parameters, null, { headers })
@@ -136,22 +134,28 @@ export function Import() {
     if (data.length && columns.length) setLoading(false);
   }, [data, columns]);
 
+  function makeColumns(rawColumns: any) {
+    return rawColumns.map((column: any) => {
+      return { header: column, accessorKey: column };
+    });
+  }
+
   function onAuthHeaderChange(e: ChangeEvent<HTMLTextAreaElement>): void {
     // @ts-ignore
-    let headers: AxiosRequestHeaders = {
+    const localHeaders: AxiosRequestHeaders = {
       Authorization: e.target.value,
     };
-    setHeaders(headers);
+    setHeaders(localHeaders);
   }
 
   function handlePaste(e: ClipboardEvent<HTMLTextAreaElement>): void {
-    let text = e.clipboardData.getData("text/plain");
+    const text = e.clipboardData.getData('text/plain');
     e.preventDefault();
 
     Papa.parse(text, {
       header: true,
       skipEmptyLines: true,
-      complete: function (results: any) {
+      complete(results: any) {
         setData(results.data);
         setColumns(makeColumns(results.meta.fields));
       },
@@ -170,12 +174,6 @@ export function Import() {
     }
   }
 
-  function makeColumns(rawColumns: any) {
-    return rawColumns.map((column: any) => {
-      return { header: column, accessorKey: column };
-    });
-  }
-
   return (
     <div>
       <h1 className="text-3xl font-bold">Trak OpenApi Inspector</h1>
@@ -188,7 +186,7 @@ export function Import() {
             <Label htmlFor="operation" value="Select operation" />
           </div>
           <SelectOperator
-            allowedMethods={["post", "put", "delete"]}
+            allowedMethods={['post', 'put', 'delete']}
             operators={operators}
             operationChange={operationChange}
           />
@@ -203,7 +201,7 @@ export function Import() {
           <Textarea
             id="AuthHeader"
             placeholder="Auth..."
-            required={true}
+            required
             rows={4}
             onChange={(e) => onAuthHeaderChange(e)}
           />
@@ -225,7 +223,7 @@ export function Import() {
         <Textarea
           id="data"
           placeholder="Paste Excel Data here..."
-          required={true}
+          required
           rows={4}
           onPaste={(e) => handlePaste(e)}
         />
