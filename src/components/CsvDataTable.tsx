@@ -1,6 +1,5 @@
 import { useState, useRef } from "react";
 import {
-  createColumnHelper,
   flexRender,
   getCoreRowModel,
   getSortedRowModel,
@@ -55,6 +54,7 @@ export default function CsvDataTable({
                       style={{ width: header.getSize() }}
                     >
                       {header.isPlaceholder ? null : (
+                        // eslint-disable-next-line jsx-a11y/click-events-have-key-events
                         <div
                           {...{
                             className: header.column.getCanSort()
@@ -65,7 +65,7 @@ export default function CsvDataTable({
                         >
                           {flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
                           {{
                             asc: " 🔼",
@@ -97,7 +97,7 @@ export default function CsvDataTable({
                       <td key={cell.id}>
                         {flexRender(
                           cell.column.columnDef.cell,
-                          cell.getContext()
+                          cell.getContext(),
                         )}
                       </td>
                     );

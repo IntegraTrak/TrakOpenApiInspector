@@ -1,24 +1,22 @@
 import { useRef } from "react";
 
-import {
-  TextInput,
-  Label,
-  Button,
-  Textarea,
-  Select,
-  Table,
-} from "flowbite-react";
+import { TextInput, Label, Button, Textarea } from "flowbite-react";
 
 import { OpenAPIV3 } from "openapi-types";
 
-// @ts-ignore
-export default function OpenApiDefinition({ onHandleLoadApi }) {
+interface OpenApiDefinitionProps {
+  onHandleLoadApi: (definition: string | OpenAPIV3.Document) => void;
+}
+
+export default function OpenApiDefinition({
+  onHandleLoadApi,
+}: OpenApiDefinitionProps): JSX.Element {
   const refOpenApiUri = useRef<HTMLInputElement>(null);
   const refOpenApiDef = useRef<HTMLTextAreaElement>(null);
 
   function getApiDefinition() {
     let definition: string | OpenAPIV3.Document = refOpenApiUri!.current!.value;
-    if (definition == "") {
+    if (definition === "") {
       definition = JSON.parse(refOpenApiDef!.current!.value);
     }
     console.log(definition);

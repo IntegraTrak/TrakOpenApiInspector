@@ -1,9 +1,7 @@
 import { Fragment } from "react";
 import { Button, Select, Table } from "flowbite-react";
-import Papa from "papaparse";
 
-import { OpenAPIClientAxios, Operation } from "openapi-client-axios";
-import { OpenAPIV3 } from "openapi-types";
+import { Operation } from "openapi-client-axios";
 
 interface MapFieldsProps {
   loading: boolean;
@@ -14,7 +12,7 @@ interface MapFieldsProps {
   importData: () => void;
 }
 
-export function MapFields({
+export default function MapFields({
   loading,
   selectedOperator,
   getParametersMap,
@@ -23,36 +21,32 @@ export function MapFields({
   importData,
 }: MapFieldsProps) {
   function getSelectedOperationRequestProperties(): [string, unknown][] {
-    if (
-      selectedOperator &&
-      selectedOperator.requestBody &&
-      "content" in selectedOperator!.requestBody
-    ) {
-      let requestBodyContentJsonSchema =
-        selectedOperator!.requestBody.content["application/json"].schema;
+    const schema =
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
-      return Object.entries(requestBodyContentJsonSchema.properties);
-    } else return [];
+      selectedOperator?.requestBody?.content?.["application/json"]?.schema;
+    const properties = schema?.properties ?? {};
+    return Object.entries(properties);
   }
 
-  function getPropertyOption(property: any, prefix: string = ""): JSX.Element {
-    if (property[1].type != "object") {
-      let propertyValue = `${prefix}${property[0]}`;
+  function getPropertyOption(property: any, prefix = ""): JSX.Element {
+    if (property[1].type !== "object") {
+      const propertyValue = `${prefix}${property[0]}`;
       return (
         <option key={propertyValue} value={propertyValue}>
           {propertyValue}
         </option>
       );
-    } else
-      return (
-        <Fragment>
-          {Object.entries(property[1].properties)
-            .filter((subProperty: any) => !subProperty[1].readOnly)
-            .map((subProperty) =>
-              getPropertyOption(subProperty, prefix + property[0] + ".")
-            )}
-        </Fragment>
-      );
+    }
+    return (
+      <>
+        {Object.entries(property[1].properties)
+          .filter((subProperty: any) => !subProperty[1].readOnly)
+          .map((subProperty) =>
+            getPropertyOption(subProperty, `${prefix + property[0]}.`),
+          )}
+      </>
+    );
   }
 
   return (
@@ -66,45 +60,37 @@ export function MapFields({
                 <Table.HeadCell>Parameters</Table.HeadCell>
               </Table.Head>
               <Table.Body className="divide-y">
-                {selectedOperator.parameters.map((parameter) => (
-                  <Table.Row className="bg-white dark:border-gray-700 dark:bg-gray-800">
-                    <Table.Cell>
-                      <Select
-                        key={
-                          // @ts-ignore
-                          parameter.name
-                        }
-                        ref={(node) => {
-                          const map = getParametersMap();
+                {selectedOperator.parameters.map((parameter) => {
+                  if (!("name" in parameter)) return <div />;
+                  return (
+                    // eslint-disable-next-line react/jsx-key
+                    <Table.Row className="bg-white dark:border-gray-700 dark:bg-gray-800">
+                      <Table.Cell>
+                        <Select
+                          key={parameter.name}
+                          ref={(node) => {
+                            const map = getParametersMap();
 
-                          if (node) {
-                            // @ts-ignore
-                            map.set(parameter.name, node);
-                          } else {
-                            // @ts-ignore
-                            map.delete(parameter.name);
-                          }
-                        }}
-                      >
-                        <option></option>
-                        {columns?.map((column) => (
-                          <option
-                            id={column["header"]}
-                            value={column["header"]}
-                          >
-                            {column["header"]}
-                          </option>
-                        ))}
-                      </Select>
-                    </Table.Cell>
-                    <Table.Cell>
-                      {
-                        // @ts-ignore
-                        parameter.name
-                      }
-                    </Table.Cell>
-                  </Table.Row>
-                ))}
+                            if (node) {
+                              map.set(parameter.name, node);
+                            } else {
+                              map.delete(parameter.name);
+                            }
+                          }}
+                        >
+                          <option aria-label="empty" />
+                          {columns?.map((column) => (
+                            // eslint-disable-next-line react/jsx-key
+                            <option id={column.Header} value={column.Header}>
+                              {column.Header}
+                            </option>
+                          ))}
+                        </Select>
+                      </Table.Cell>
+                      <Table.Cell>{parameter.name}</Table.Cell>
+                    </Table.Row>
+                  );
+                })}
               </Table.Body>
             </Table>
           </div>
@@ -118,18 +104,19 @@ export function MapFields({
               </Table.Head>
               <Table.Body className="divide-y">
                 {columns?.map((column) => (
+                  // eslint-disable-next-line react/jsx-key
                   <Table.Row className="bg-white dark:border-gray-700 dark:bg-gray-800">
-                    <Table.Cell>{column["header"]}</Table.Cell>
+                    <Table.Cell>{column.Header}</Table.Cell>
                     <Table.Cell>
                       <Select
-                        key={column["header"]}
+                        key={column.Header}
                         ref={(node) => {
                           const map = getRequestFieldsMap();
 
                           if (node) {
-                            map.set(column["header"], node);
+                            map.set(column.Header, node);
                           } else {
-                            map.delete(column["header"]);
+                            map.delete(column.Header);
                           }
                         }}
                       >
