@@ -1,39 +1,19 @@
-import {
-  useState,
-  useRef,
-  useEffect,
-  ClipboardEvent,
-  ChangeEvent,
-} from "react";
+import { useState, useRef, useEffect, ClipboardEvent, ChangeEvent } from "react";
 import { Label, Textarea } from "flowbite-react";
-import Papa, { ParseResult } from "papaparse";
+import Papa from "papaparse";
 import { set } from "radash";
 
 import "../App.css";
 
-import {
-  OpenAPIClientAxios,
-  Operation,
-  AxiosRequestHeaders,
-} from "openapi-client-axios";
+import { OpenAPIClientAxios, Operation, AxiosRequestHeaders } from "openapi-client-axios";
 import { OpenAPIV3 } from "openapi-types";
 import OpenApiDefinition from "../components/OpenApiDefinition";
-import CsvDataTable from "../components/CsvDataTable";
+import CsvDataTable, { TableData } from "../components/CsvDataTable";
 import SelectOperator from "../components/SelectOperator";
 import MapFields from "../components/MapFields";
 
 interface CSVData {
   [key: string]: string;
-}
-
-interface TableData {
-  columns: {
-    Header: string;
-    accessorKey: string;
-  }[];
-  rows: {
-    [key: string]: string;
-  }[];
 }
 
 export default function Import() {
@@ -85,15 +65,9 @@ export default function Import() {
 
       data.rows.forEach((row) => {
         data.columns.forEach((colName) => {
-          const requestFieldValue = requestFieldMap.get(
-            colName.accessorKey,
-          )?.value;
+          const requestFieldValue = requestFieldMap.get(colName.accessorKey)?.value;
           if (requestFieldValue && requestFieldValue !== "Skip") {
-            requestBody = set(
-              requestBody,
-              requestFieldValue,
-              row[colName.accessorKey],
-            );
+            requestBody = set(requestBody, requestFieldValue, row[colName.accessorKey]);
           }
         });
 
@@ -114,29 +88,23 @@ export default function Import() {
           case "post":
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
-            apiClientPath
-              .post(undefined, requestBody, { headers })
-              .then((response: unknown) => {
-                console.log(response);
-              });
+            apiClientPath.post(undefined, requestBody, { headers }).then((response: unknown) => {
+              console.log(response);
+            });
             break;
           case "put":
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
-            apiClientPath
-              .put(parameters, requestBody, { headers })
-              .then((response: any) => {
-                console.log(response);
-              });
+            apiClientPath.put(parameters, requestBody, { headers }).then((response: any) => {
+              console.log(response);
+            });
             break;
           case "delete":
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
-            apiClientPath
-              .delete(parameters, null, { headers })
-              .then((response: any) => {
-                console.log(response);
-              });
+            apiClientPath.delete(parameters, null, { headers }).then((response: any) => {
+              console.log(response);
+            });
             break;
           default:
             console.log("No method selected");
@@ -179,13 +147,9 @@ export default function Import() {
     });
   }
 
-  function operationChange(event: {
-    target: { value: string | undefined };
-  }): void {
+  function operationChange(event: { target: { value: string | undefined } }): void {
     if (event.target.value) {
-      const operation: Operation = operators.filter(
-        (op) => op.operationId === event.target.value,
-      )[0];
+      const operation: Operation = operators.filter((op) => op.operationId === event.target.value)[0];
       setSelectedOperator(operation);
       console.log(operation);
     }
@@ -215,13 +179,7 @@ export default function Import() {
           <div className="mb-2 block">
             <Label htmlFor="AuthHeader" value="Authorization Header" />
           </div>
-          <Textarea
-            id="AuthHeader"
-            placeholder="Auth..."
-            required
-            rows={4}
-            onChange={(e) => onAuthHeaderChange(e)}
-          />
+          <Textarea id="AuthHeader" placeholder="Auth..." required rows={4} onChange={(e) => onAuthHeaderChange(e)} />
         </div>
       </div>
       <MapFields
@@ -237,13 +195,7 @@ export default function Import() {
         <div className="mb-2 block">
           <Label htmlFor="data" value="Data" />
         </div>
-        <Textarea
-          id="data"
-          placeholder="Paste Excel Data here..."
-          required
-          rows={4}
-          onPaste={(e) => handlePaste(e)}
-        />
+        <Textarea id="data" placeholder="Paste Excel Data here..." required rows={4} onPaste={(e) => handlePaste(e)} />
       </div>
 
       {!loading && <CsvDataTable data={data.rows} columns={data.columns} />}

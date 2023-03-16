@@ -8,11 +8,7 @@ interface SelectOperatorProps {
   operationChange: (event: React.ChangeEvent<HTMLSelectElement>) => void;
 }
 
-export default function SelectOperator({
-  operators,
-  allowedMethods,
-  operationChange,
-}: SelectOperatorProps) {
+export default function SelectOperator({ operators, allowedMethods, operationChange }: SelectOperatorProps) {
   return (
     <Select id="operation" required onChange={operationChange}>
       {operators

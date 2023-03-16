@@ -4,11 +4,7 @@ import { set } from "radash";
 
 import "../App.css";
 
-import {
-  OpenAPIClientAxios,
-  Operation,
-  AxiosRequestHeaders,
-} from "openapi-client-axios";
+import { OpenAPIClientAxios, Operation, AxiosRequestHeaders } from "openapi-client-axios";
 import { OpenAPIV3 } from "openapi-types";
 import OpenApiDefinition from "../components/OpenApiDefinition";
 import CsvDataTable from "../components/CsvDataTable";
@@ -51,13 +47,9 @@ export default function Export() {
     setHeaders(localHeaders);
   }
 
-  function operationChange(event: {
-    target: { value: string | undefined };
-  }): void {
+  function operationChange(event: { target: { value: string | undefined } }): void {
     if (event.target.value) {
-      const operation: Operation = operators.filter(
-        (op) => op.operationId === event.target.value,
-      )[0];
+      const operation: Operation = operators.filter((op) => op.operationId === event.target.value)[0];
       setSelectedOperator(operation);
       console.log(operation);
     }
@@ -74,11 +66,7 @@ export default function Export() {
           <div className="mb-2 block">
             <Label htmlFor="operation" value="Select operation" />
           </div>
-          <SelectOperator
-            operators={operators}
-            allowedMethods={["get"]}
-            operationChange={(e) => operationChange(e)}
-          />
+          <SelectOperator operators={operators} allowedMethods={["get"]} operationChange={(e) => operationChange(e)} />
         </div>
       </div>
 
@@ -87,13 +75,7 @@ export default function Export() {
           <div className="mb-2 block">
             <Label htmlFor="AuthHeader" value="Authorization Header" />
           </div>
-          <Textarea
-            id="AuthHeader"
-            placeholder="Auth..."
-            required
-            rows={4}
-            onChange={(e) => onAuthHeaderChange(e)}
-          />
+          <Textarea id="AuthHeader" placeholder="Auth..." required rows={4} onChange={(e) => onAuthHeaderChange(e)} />
         </div>
       </div>
 

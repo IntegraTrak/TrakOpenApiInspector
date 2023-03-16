@@ -1,20 +1,22 @@
 import { useState, useRef } from "react";
-import {
-  flexRender,
-  getCoreRowModel,
-  getSortedRowModel,
-  SortingState,
-  useReactTable,
-} from "@tanstack/react-table";
+import { flexRender, getCoreRowModel, getSortedRowModel, SortingState, useReactTable } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
 
-export default function CsvDataTable({
-  data,
-  columns,
-}: {
-  data: any[];
-  columns: any[];
-}) {
+export interface TableColumn {
+  Header: string;
+  accessorKey: string;
+}
+
+export interface TableRow {
+  [key: string]: string;
+}
+
+export interface TableData {
+  columns: TableColumn[];
+  rows: TableRow[];
+}
+
+export default function CsvDataTable({ data, columns }: { data: any[]; columns: any[] }) {
   const [sorting, setSorting] = useState<SortingState>([]);
 
   const table = useReactTable({
@@ -48,25 +50,16 @@ export default function CsvDataTable({
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                   return (
-                    <th
-                      key={header.id}
-                      colSpan={header.colSpan}
-                      style={{ width: header.getSize() }}
-                    >
+                    <th key={header.id} colSpan={header.colSpan} style={{ width: header.getSize() }}>
                       {header.isPlaceholder ? null : (
                         // eslint-disable-next-line jsx-a11y/click-events-have-key-events
                         <div
                           {...{
-                            className: header.column.getCanSort()
-                              ? "cursor-pointer select-none"
-                              : "",
+                            className: header.column.getCanSort() ? "cursor-pointer select-none" : "",
                             onClick: header.column.getToggleSortingHandler(),
                           }}
                         >
-                          {flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
+                          {flexRender(header.column.columnDef.header, header.getContext())}
                           {{
                             asc: " 🔼",
                             desc: " 🔽",
@@ -87,20 +80,11 @@ export default function CsvDataTable({
                   key={row.id}
                   style={{
                     height: `${virtualRow.size}px`,
-                    transform: `translateY(${
-                      virtualRow.start - index * virtualRow.size
-                    }px)`,
+                    transform: `translateY(${virtualRow.start - index * virtualRow.size}px)`,
                   }}
                 >
                   {row.getVisibleCells().map((cell) => {
-                    return (
-                      <td key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
-                      </td>
-                    );
+                    return <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>;
                   })}
                 </tr>
               );
