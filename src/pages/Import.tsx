@@ -5,7 +5,7 @@ import { set } from "radash";
 
 import "../App.css";
 
-import { OpenAPIClientAxios, Operation, AxiosRequestHeaders } from "openapi-client-axios";
+import { OpenAPIClientAxios, Operation, AxiosRequestHeaders, Method } from "openapi-client-axios";
 import { OpenAPIV3 } from "openapi-types";
 import OpenApiDefinition from "../components/OpenApiDefinition";
 import CsvDataTable, { TableData } from "../components/CsvDataTable";
@@ -83,37 +83,25 @@ export default function Import() {
         });
 
         const path = selectedOperator?.path as string;
-        const apiClientPath = apiClient?.paths[path];
+        const method = selectedOperator?.method as Method;
         console.log(path);
-        console.log(selectedOperator?.method);
+        console.log(method);
         console.log(parameters);
 
-        switch (selectedOperator?.method) {
-          case "post":
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
-            apiClientPath.post(undefined, requestBody, { headers }).then((response: unknown) => {
-              console.log(response);
-            });
-            break;
-          case "put":
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
-            apiClientPath.put(parameters, requestBody, { headers }).then((response: unknown) => {
-              console.log(response);
-            });
-            break;
-          case "delete":
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
-            apiClientPath.delete(parameters, null, { headers }).then((response: unknown) => {
-              console.log(response);
-            });
-            break;
-          default:
-            console.log("No method selected");
-            break;
-        }
+        apiClient
+          .request({
+            method,
+            url: path,
+            params: parameters,
+            data: requestBody,
+            headers,
+          })
+          .then((response: unknown) => {
+            console.log(response);
+          })
+          .catch((error: unknown) => {
+            console.log(error);
+          });
       });
     });
   }
@@ -139,7 +127,7 @@ export default function Import() {
       header: true,
       skipEmptyLines: true,
       complete: (results) => {
-        const csvData: CSVData[] = results.data;
+        const csvData: CSVData[] = results.data as CSVData[];
         const columns = Object.keys(csvData[0]).map((key) => ({
           Header: key,
           accessorKey: key,
