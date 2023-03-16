@@ -68,6 +68,13 @@ export default function CsvDataTable({ data, columns }: CsvDataTableProps) {
                       {...{
                         className: header.column.getCanSort() ? "cursor-pointer select-none" : "",
                         onClick: header.column.getToggleSortingHandler(),
+                        onKeyDown: (event: React.KeyboardEvent<HTMLDivElement>) => {
+                          if (header.column.getCanSort() && (event.key === "Enter" || event.key === " ")) {
+                            header.column.toggleSorting();
+                          }
+                        },
+                        role: "button",
+                        tabIndex: 0,
                       }}
                     >
                       {flexRender(header.column.columnDef.header, header.getContext())}
