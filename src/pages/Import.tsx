@@ -45,7 +45,11 @@ export default function Import() {
     return requestFieldsRef.current;
   }
 
-  function handleLoadAPI(definition: string | OpenAPIV3.Document) {
+  function handleLoadAPI(definition: string | OpenAPIV3.Document | undefined) {
+    if (!definition) {
+      return;
+    }
+
     const localApi = new OpenAPIClientAxios({
       definition,
     });
@@ -61,7 +65,7 @@ export default function Import() {
     const requestFieldMap = getRequestFieldsMap();
 
     api?.init().then((apiClient) => {
-      let requestBody: any = {};
+      let requestBody: object;
 
       data.rows.forEach((row) => {
         data.columns.forEach((colName) => {
@@ -73,7 +77,7 @@ export default function Import() {
 
         console.log(JSON.stringify(requestBody));
 
-        let parameters: any = {};
+        let parameters: object = {};
         parameterMap.forEach((value, key) => {
           parameters = set(parameters, `${key}`, row[value.value]);
         });
@@ -95,14 +99,14 @@ export default function Import() {
           case "put":
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
-            apiClientPath.put(parameters, requestBody, { headers }).then((response: any) => {
+            apiClientPath.put(parameters, requestBody, { headers }).then((response: unknown) => {
               console.log(response);
             });
             break;
           case "delete":
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
-            apiClientPath.delete(parameters, null, { headers }).then((response: any) => {
+            apiClientPath.delete(parameters, null, { headers }).then((response: unknown) => {
               console.log(response);
             });
             break;

@@ -5,7 +5,7 @@ import { TextInput, Label, Button, Textarea } from "flowbite-react";
 import { OpenAPIV3 } from "openapi-types";
 
 interface OpenApiDefinitionProps {
-  onHandleLoadApi: (definition: string | OpenAPIV3.Document) => void;
+  onHandleLoadApi: (definition: string | OpenAPIV3.Document | undefined) => void;
 }
 
 export default function OpenApiDefinition({ onHandleLoadApi }: OpenApiDefinitionProps): JSX.Element {
@@ -13,9 +13,9 @@ export default function OpenApiDefinition({ onHandleLoadApi }: OpenApiDefinition
   const refOpenApiDef = useRef<HTMLTextAreaElement>(null);
 
   function getApiDefinition() {
-    let definition: string | OpenAPIV3.Document = refOpenApiUri!.current!.value;
-    if (definition === "") {
-      definition = JSON.parse(refOpenApiDef!.current!.value);
+    let definition: string | OpenAPIV3.Document | undefined = refOpenApiUri?.current?.value;
+    if (definition && refOpenApiDef.current) {
+      definition = JSON.parse(refOpenApiDef.current.value);
     }
     console.log(definition);
     return definition;
