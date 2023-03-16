@@ -23,8 +23,7 @@ export default function MapParametersTable({
         {selectedOperatorParameters.map((parameter) => {
           if (!("name" in parameter)) return <div />;
           return (
-            // eslint-disable-next-line react/jsx-key
-            <Table.Row className="bg-white dark:border-gray-700 dark:bg-gray-800">
+            <Table.Row key={parameter.name} className="bg-white dark:border-gray-700 dark:bg-gray-800">
               <Table.Cell>
                 <Select
                   key={parameter.name}
@@ -39,16 +38,11 @@ export default function MapParametersTable({
                   }}
                 >
                   <option aria-label="empty" />
-                  {columns?.map(
-                    (
-                      column, // eslint-disable-next-line react/jsx-key
-                    ) => (
-                      // eslint-disable-next-line react/jsx-key
-                      <option id={column.Header} value={column.Header}>
-                        {column.Header}
-                      </option>
-                    ),
-                  )}
+                  {columns?.map((column) => (
+                    <option key={column.Header} id={column.Header} value={column.Header}>
+                      {column.Header}
+                    </option>
+                  ))}
                 </Select>
               </Table.Cell>
               <Table.Cell>{parameter.name}</Table.Cell>
