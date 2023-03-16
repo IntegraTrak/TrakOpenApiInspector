@@ -14,7 +14,7 @@ export default function OpenApiDefinition({ onHandleLoadApi }: OpenApiDefinition
 
   function getApiDefinition() {
     let definition: string | OpenAPIV3.Document | undefined = refOpenApiUri?.current?.value;
-    if (definition && refOpenApiDef.current) {
+    if (!definition && refOpenApiDef.current) {
       definition = JSON.parse(refOpenApiDef.current.value);
     }
     console.log(definition);
