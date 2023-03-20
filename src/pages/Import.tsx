@@ -111,11 +111,9 @@ export default function Import() {
   }, [data]);
 
   function onAuthHeaderChange(e: ChangeEvent<HTMLTextAreaElement>): void {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    const localHeaders: AxiosRequestHeaders = {
+    const localHeaders = {
       Authorization: e.target.value,
-    };
+    } as AxiosRequestHeaders;
     setHeaders(localHeaders);
   }
 
