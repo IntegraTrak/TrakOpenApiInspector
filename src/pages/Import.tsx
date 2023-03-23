@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, ClipboardEvent, ChangeEvent } from "react";
-import { Label, Textarea } from "flowbite-react";
+import { Button, Label, Textarea } from "flowbite-react";
 import Papa from "papaparse";
 import { set } from "radash";
 
@@ -178,8 +178,15 @@ export default function Import() {
         selectedOperator={selectedOperator}
         getParametersMap={() => getParametersMap()}
         getRequestFieldsMap={() => getRequestFieldsMap()}
-        importData={() => importData()}
       />
+
+      <div className="flex flex-row justify-end items-end space-x-4">
+        <div className="py-2 grow-0">
+          <Button type="submit" onClick={() => importData()}>
+            Import Data
+          </Button>
+        </div>
+      </div>
 
       <div id="textarea">
         <div className="mb-2 block">
