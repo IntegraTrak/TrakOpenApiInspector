@@ -3,7 +3,7 @@ import { Button, Label, Textarea } from "flowbite-react";
 
 import "../App.css";
 
-import { OpenAPIClientAxios, Operation, AxiosRequestHeaders, Method } from "openapi-client-axios";
+import { OpenAPIClientAxios, Operation, AxiosRequestHeaders } from "openapi-client-axios";
 import { OpenAPIV3 } from "openapi-types";
 import OpenApiDefinition from "../components/OpenApiDefinition";
 import CsvDataTable, { TableData, TableRow } from "../components/CsvDataTable";
@@ -20,12 +20,12 @@ export default function Export() {
   const [loading, setLoading] = useState(true);
 
   const [api, setApi] = useState<OpenAPIClientAxios>();
-  const [headers, setHeaders] = useState<AxiosRequestHeaders>();
+  const [requestHeaders, setHeaders] = useState<AxiosRequestHeaders>();
   const [operators, setOperators] = useState<Operation[]>([]);
   const [selectedOperator, setSelectedOperator] = useState<Operation>();
   const [selectedOperatorSchema, setSelectedOperatorSchema] = useState<SchemaMap>();
   const [parameterValues, setParameterValues] = useState<{ [key: string]: string }>({});
-  const [selectedFields, setSelectedFields] = useState(new Map<string, boolean>());
+  const [selectedFields, setSelectedFields] = useState<Map<string, boolean>>(new Map<string, boolean>());
 
   useEffect(() => {
     if (data.rows.length && data.columns.length) setLoading(false);
@@ -43,6 +43,13 @@ export default function Export() {
   }
 
   useEffect(() => {
+    setData({
+      columns: [],
+      rows: [],
+    });
+    setParameterValues({});
+    setSelectedFields(new Map<string, boolean>());
+
     if (selectedOperator) updateSchema(selectedOperator);
   }, [selectedOperator]);
 
@@ -91,19 +98,16 @@ export default function Export() {
 
     const apiClient = await api.init();
 
-    const path = selectedOperator.path as string;
-    const method = selectedOperator.method as Method;
-
     try {
-      const response = await apiClient.request({
-        method,
-        url: path,
-        params: parameterValues,
-        headers,
-      });
+      const axiosConfig = api.getAxiosConfigForOperation(selectedOperator, [parameterValues]);
+      axiosConfig.headers = { ...axiosConfig.headers, ...requestHeaders };
 
+      const response = await apiClient.request(axiosConfig);
       if (response.status === 200 && selectedOperatorSchema) {
-        const responseData = response.data;
+        let responseData = response.data;
+        if (!Array.isArray(responseData)) {
+          responseData = [responseData];
+        }
 
         const columns = [...selectedOperatorSchema.entries()].map(([key]) => ({
           Header: key,
