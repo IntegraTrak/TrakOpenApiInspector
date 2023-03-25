@@ -122,7 +122,8 @@ export default function Export() {
             const colKey = column.accessorKey;
 
             if (colKey.includes(".")) {
-              const value = colKey.split(".").reduce((acc, key) => acc?.[key], row);
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const value = colKey.split(".").reduce((acc: any, key) => acc?.[key], row);
               newRow[colKey] = value !== undefined ? value : "";
             } else {
               newRow[colKey] = row[colKey];
