@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, ClipboardEventHandler } from "react";
 import {
   flexRender,
   getCoreRowModel,
@@ -10,6 +10,7 @@ import {
 } from "@tanstack/react-table";
 import { useVirtualizer, Virtualizer } from "@tanstack/react-virtual";
 import { Button } from "flowbite-react";
+import Papa from "papaparse";
 
 export interface TableColumn {
   Header: string;
@@ -61,31 +62,38 @@ export default function CsvDataTable({
     overscan: 20,
   });
 
-  const handleCopyToExcel = useCallback(
-    function handleCopyToExcel() {
+  const handleCopyTo = useCallback(
+    function handleCopyTo(delimiter = "\t"): ClipboardEventHandler<HTMLTableElement> {
       const lastHeaderGroup = csvTable.getHeaderGroups().at(-1);
-      if (!lastHeaderGroup) return;
+      if (!lastHeaderGroup) return () => {};
       const headerText = lastHeaderGroup.headers
         .filter((h) => h.column.getIsVisible())
         .map((header) => {
           return header.id;
-        })
-        .join("\t");
-      console.log("headerText", headerText);
+        });
 
-      const text = csvTable
-        .getCoreRowModel()
-        .rows.map((row2) => {
-          return row2
-            .getVisibleCells()
-            .map((cell) => cell.getValue() ?? "")
-            .join("\t");
-        })
-        .join("\n");
+      const tableData = csvTable.getCoreRowModel().rows.map((row2) => row2.original);
+      const csvText = Papa.unparse(
+        {
+          fields: headerText,
+          data: tableData,
+        },
+        {
+          quotes(field) {
+            return typeof field === "string" && field.includes(delimiter);
+          },
+          quoteChar: '"',
+          delimiter,
+          newline: "\n",
+        },
+      );
 
-      console.log("text", text);
+      navigator.clipboard.writeText(csvText);
 
-      navigator.clipboard.writeText(`${headerText}\n${text}`);
+      return (e) => {
+        e.preventDefault();
+        e.clipboardData.setData("text/plain", csvText);
+      };
     },
     [csvTable],
   );
@@ -155,12 +163,15 @@ export default function CsvDataTable({
   return (
     <div ref={parentRef} className="container">
       <div>
-        <Button type="button" onClick={() => handleCopyToExcel()}>
+        <Button type="button" onClick={() => handleCopyTo("\t")}>
           Copy (Excel)
+        </Button>
+        <Button type="button" onClick={() => handleCopyTo(",")}>
+          Copy (CSV)
         </Button>
       </div>
       <div style={{ height: `${virtualizer.getTotalSize()}px` }}>
-        <table onCopy={handleCopyToExcel}>
+        <table onCopy={handleCopyTo("\t")}>
           {renderTableHeader(csvTable)}
           {renderTableBody(rows, virtualizer)}
         </table>
