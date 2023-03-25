@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import {
   flexRender,
   getCoreRowModel,
@@ -9,10 +9,12 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { useVirtualizer, Virtualizer } from "@tanstack/react-virtual";
+import { Button } from "flowbite-react";
 
 export interface TableColumn {
   Header: string;
   accessorKey: string;
+  accessorFn?: (row: TableRow) => string;
 }
 
 export interface TableRow {
@@ -27,14 +29,19 @@ export interface TableData {
 interface CsvDataTableProps {
   data: TableRow[];
   columns: TableColumn[];
+  selectedFields?: Map<string, boolean>;
 }
 
-export default function CsvDataTable({ data, columns }: CsvDataTableProps) {
+export default function CsvDataTable({
+  data,
+  columns,
+  selectedFields = new Map<string, boolean>(),
+}: CsvDataTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
 
   const csvTable = useReactTable({
     data,
-    columns,
+    columns: selectedFields.size !== 0 ? columns.filter((column) => selectedFields.get(column.accessorKey)) : columns,
     state: {
       sorting,
     },
@@ -53,6 +60,35 @@ export default function CsvDataTable({ data, columns }: CsvDataTableProps) {
     estimateSize: () => 34,
     overscan: 20,
   });
+
+  const handleCopyToExcel = useCallback(
+    function handleCopyToExcel() {
+      const lastHeaderGroup = csvTable.getHeaderGroups().at(-1);
+      if (!lastHeaderGroup) return;
+      const headerText = lastHeaderGroup.headers
+        .filter((h) => h.column.getIsVisible())
+        .map((header) => {
+          return header.id;
+        })
+        .join("\t");
+      console.log("headerText", headerText);
+
+      const text = csvTable
+        .getCoreRowModel()
+        .rows.map((row2) => {
+          return row2
+            .getVisibleCells()
+            .map((cell) => cell.getValue() ?? "")
+            .join("\t");
+        })
+        .join("\n");
+
+      console.log("text", text);
+
+      navigator.clipboard.writeText(`${headerText}\n${text}`);
+    },
+    [csvTable],
+  );
 
   function renderTableHeader(table: Table<TableRow>) {
     return (
@@ -118,8 +154,13 @@ export default function CsvDataTable({ data, columns }: CsvDataTableProps) {
 
   return (
     <div ref={parentRef} className="container">
+      <div>
+        <Button type="button" onClick={() => handleCopyToExcel()}>
+          Copy (Excel)
+        </Button>
+      </div>
       <div style={{ height: `${virtualizer.getTotalSize()}px` }}>
-        <table>
+        <table onCopy={handleCopyToExcel}>
           {renderTableHeader(csvTable)}
           {renderTableBody(rows, virtualizer)}
         </table>
@@ -127,3 +168,7 @@ export default function CsvDataTable({ data, columns }: CsvDataTableProps) {
     </div>
   );
 }
+
+CsvDataTable.defaultProps = {
+  selectedFields: new Map(),
+};
