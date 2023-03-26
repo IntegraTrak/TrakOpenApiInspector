@@ -25,6 +25,7 @@ export interface TableRow {
 export interface TableData {
   columns: TableColumn[];
   rows: TableRow[];
+  key: string;
 }
 
 interface CsvDataTableProps {
