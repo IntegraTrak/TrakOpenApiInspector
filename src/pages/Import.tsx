@@ -1,11 +1,16 @@
 import { useState, useRef, useEffect, ClipboardEvent, ChangeEvent } from "react";
 import { Button, Label, Textarea } from "flowbite-react";
 import Papa from "papaparse";
-import { set } from "radash";
 
 import "../App.css";
 
-import { OpenAPIClientAxios, Operation, AxiosRequestHeaders, Method } from "openapi-client-axios";
+import {
+  OpenAPIClientAxios,
+  Operation,
+  AxiosRequestHeaders,
+  ParameterObject,
+  UnknownParamsObject,
+} from "openapi-client-axios";
 import { OpenAPIV3 } from "openapi-types";
 import OpenApiDefinition from "../components/OpenApiDefinition";
 import CsvDataTable, { TableData } from "../components/CsvDataTable";
@@ -24,7 +29,7 @@ export default function Import() {
   const [loading, setLoading] = useState(true);
 
   const [api, setApi] = useState<OpenAPIClientAxios>();
-  const [headers, setHeaders] = useState<AxiosRequestHeaders>();
+  const [requestHeaders, setHeaders] = useState<AxiosRequestHeaders>();
   const [operators, setOperators] = useState<Operation[]>([]);
   const [selectedOperator, setSelectedOperator] = useState<Operation>();
 
@@ -60,50 +65,43 @@ export default function Import() {
     });
   }
 
-  function importData() {
+  async function importData() {
+    if (!selectedOperator) return;
+    if (!api) return;
+
     const parameterMap = getParametersMap();
     const requestFieldMap = getRequestFieldsMap();
 
-    api?.init().then((apiClient) => {
+    const apiClient = await api.init();
+    try {
       let requestBody: object;
 
-      data.rows.forEach((row) => {
+      data.rows.forEach(async (row) => {
         data.columns.forEach((colName) => {
           const requestFieldValue = requestFieldMap.get(colName.accessorKey)?.value;
           if (requestFieldValue && requestFieldValue !== "Skip") {
-            requestBody = set(requestBody, requestFieldValue, row[colName.accessorKey]);
+            const requestField = { [requestFieldValue]: row[colName.accessorKey] };
+            requestBody = { ...requestBody, ...requestField };
           }
         });
 
-        console.log(JSON.stringify(requestBody));
-
         let parameters: object = {};
         parameterMap.forEach((value, key) => {
-          parameters = set(parameters, `${key}`, row[value.value]);
+          const param = { [key]: row[value.value] };
+          parameters = { ...parameters, ...param };
         });
 
-        const path = selectedOperator?.path as string;
-        const method = selectedOperator?.method as Method;
-        console.log(path);
-        console.log(method);
-        console.log(parameters);
-
-        apiClient
-          .request({
-            method,
-            url: path,
-            params: parameters,
-            data: requestBody,
-            headers,
-          })
-          .then((response: unknown) => {
-            console.log(response);
-          })
-          .catch((error: unknown) => {
-            console.log(error);
-          });
+        const axiosConfig = api.getAxiosConfigForOperation(selectedOperator, [
+          parameters as UnknownParamsObject,
+          requestBody,
+        ]);
+        axiosConfig.headers = { ...axiosConfig.headers, ...requestHeaders };
+        const response = await apiClient.request(axiosConfig);
+        console.log(response);
       });
-    });
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   useEffect(() => {
