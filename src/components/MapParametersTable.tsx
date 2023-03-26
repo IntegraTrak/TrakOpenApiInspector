@@ -5,14 +5,12 @@ import { TableColumn } from "./CsvDataTable";
 interface MapParametersTableProps {
   selectedOperatorParameters: (OpenAPIV3.ReferenceObject | OpenAPIV3.ParameterObject)[];
   columns: TableColumn[];
-  parameterMapping: Map<string, string>;
   onParameterMappingChange: (field: string, requestField: string) => void;
 }
 
 export default function MapParametersTable({
   selectedOperatorParameters,
   columns,
-  parameterMapping,
   onParameterMappingChange,
 }: MapParametersTableProps) {
   const handleFieldChange = (event: React.ChangeEvent<HTMLSelectElement>) => {

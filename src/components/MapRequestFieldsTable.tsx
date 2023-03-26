@@ -8,14 +8,12 @@ type FieldDef = [string, OpenAPIV3.SchemaObject];
 interface MapRequestFieldsTableProps {
   selectedOperatorRequestBody: RequestBody;
   columns: TableColumn[];
-  requestFieldMapping: Map<string, string>;
   onFieldMappingChange: (field: string, requestField: string) => void;
 }
 
 export default function MapRequestFieldsTable({
   selectedOperatorRequestBody,
   columns,
-  requestFieldMapping,
   onFieldMappingChange,
 }: MapRequestFieldsTableProps) {
   function getSelectedOperationRequestProperties(): FieldDef[] {
