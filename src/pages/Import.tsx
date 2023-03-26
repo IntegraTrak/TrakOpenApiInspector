@@ -10,6 +10,7 @@ import {
   AxiosRequestHeaders,
   ParameterObject,
   UnknownParamsObject,
+  AxiosError,
 } from "openapi-client-axios";
 import { OpenAPIV3 } from "openapi-types";
 import OpenApiDefinition from "../components/OpenApiDefinition";
@@ -79,11 +80,15 @@ export default function Import() {
     const newStatusData = new Map<string, { resultStatusCode?: string; resultStatusText?: string }>();
     setStatusData(newStatusData);
 
+    const resultColumns = ["resultStatusCode", "resultStatusText"];
+    const existingResultColumns = data.columns.filter((col) => resultColumns.includes(col.accessorKey));
+
     const updatedColumns = [
-      ...data.columns,
+      ...data.columns.filter((col) => !existingResultColumns.includes(col)),
       { Header: "Result Status Code", accessorKey: "resultStatusCode" },
       { Header: "Result Status Text", accessorKey: "resultStatusText" },
     ];
+
     setData({ columns: updatedColumns, rows: data.rows, key: Date.now().toString() });
 
     const apiClient = await api.init();
@@ -122,11 +127,15 @@ export default function Import() {
               resultStatusText: response.statusText,
             });
             setStatusData(newStatusData);
-            setData({ columns: updatedColumns, rows: data.rows, key: Date.now().toString() });
           } catch (error) {
-            newStatusData.set(row.id, { resultStatusText: "exception" });
+            const axiosError = error as AxiosError;
+            newStatusData.set(row.id, {
+              resultStatusCode: axiosError.response ? axiosError.response.status.toString() : "Error",
+              resultStatusText: axiosError.response ? axiosError.response.statusText : "",
+            });
             setStatusData(newStatusData);
           }
+          setData({ columns: updatedColumns, rows: data.rows, key: Date.now().toString() });
         }),
       );
     } catch (error) {
