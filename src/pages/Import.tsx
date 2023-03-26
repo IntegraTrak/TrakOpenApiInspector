@@ -25,6 +25,7 @@ export default function Import() {
   const [data, setData] = useState<TableData>({
     columns: [],
     rows: [],
+    key: "",
   });
   const [loading, setLoading] = useState(true);
 
@@ -32,6 +33,9 @@ export default function Import() {
   const [requestHeaders, setHeaders] = useState<AxiosRequestHeaders>();
   const [operators, setOperators] = useState<Operation[]>([]);
   const [selectedOperator, setSelectedOperator] = useState<Operation>();
+
+  // Create a separate state variable to hold the status data for each row
+  const [statusData, setStatusData] = useState<Map<string, { resultStatusCode?: string; resultStatusText?: string }>>();
 
   const parametersRef = useRef<Map<string, HTMLSelectElement> | null>(null);
   const requestFieldsRef = useRef<Map<string, HTMLSelectElement> | null>(null);
@@ -72,33 +76,59 @@ export default function Import() {
     const parameterMap = getParametersMap();
     const requestFieldMap = getRequestFieldsMap();
 
+    const newStatusData = new Map<string, { resultStatusCode?: string; resultStatusText?: string }>();
+    setStatusData(newStatusData);
+
+    const updatedColumns = [
+      ...data.columns,
+      { Header: "Result Status Code", accessorKey: "resultStatusCode" },
+      { Header: "Result Status Text", accessorKey: "resultStatusText" },
+    ];
+    setData({ columns: updatedColumns, rows: data.rows, key: Date.now().toString() });
+
     const apiClient = await api.init();
+
     try {
-      let requestBody: object;
+      let requestBody: object = {};
 
-      data.rows.forEach(async (row) => {
-        data.columns.forEach((colName) => {
-          const requestFieldValue = requestFieldMap.get(colName.accessorKey)?.value;
-          if (requestFieldValue && requestFieldValue !== "Skip") {
-            const requestField = { [requestFieldValue]: row[colName.accessorKey] };
-            requestBody = { ...requestBody, ...requestField };
+      await Promise.all(
+        data.rows.map(async (row) => {
+          // eslint-disable-next-line @typescript-eslint/no-loop-func
+          data.columns.forEach((colName) => {
+            const requestFieldValue = requestFieldMap.get(colName.accessorKey)?.value;
+            if (requestFieldValue && requestFieldValue !== "Skip") {
+              const requestField = { [requestFieldValue]: row[colName.accessorKey] };
+              requestBody = { ...requestBody, ...requestField };
+            }
+          });
+
+          let parameters: object = {};
+          parameterMap.forEach((value, key) => {
+            const param = { [key]: row[value.value] };
+            parameters = { ...parameters, ...param };
+          });
+
+          const axiosConfig = api.getAxiosConfigForOperation(selectedOperator, [
+            parameters as UnknownParamsObject,
+            requestBody,
+          ]);
+          axiosConfig.headers = { ...axiosConfig.headers, ...requestHeaders };
+
+          try {
+            const response = await apiClient.request(axiosConfig);
+
+            newStatusData.set(row.id, {
+              resultStatusCode: response.status.toString(),
+              resultStatusText: response.statusText,
+            });
+            setStatusData(newStatusData);
+            setData({ columns: updatedColumns, rows: data.rows, key: Date.now().toString() });
+          } catch (error) {
+            newStatusData.set(row.id, { resultStatusText: "exception" });
+            setStatusData(newStatusData);
           }
-        });
-
-        let parameters: object = {};
-        parameterMap.forEach((value, key) => {
-          const param = { [key]: row[value.value] };
-          parameters = { ...parameters, ...param };
-        });
-
-        const axiosConfig = api.getAxiosConfigForOperation(selectedOperator, [
-          parameters as UnknownParamsObject,
-          requestBody,
-        ]);
-        axiosConfig.headers = { ...axiosConfig.headers, ...requestHeaders };
-        const response = await apiClient.request(axiosConfig);
-        console.log(response);
-      });
+        }),
+      );
     } catch (error) {
       console.error(error);
     }
@@ -130,7 +160,7 @@ export default function Import() {
         }));
         const rows = csvData.map((item) => ({ ...item }));
 
-        setData({ columns, rows });
+        setData({ columns, rows, key: Date.now().toString() });
       },
     });
   }
@@ -193,7 +223,11 @@ export default function Import() {
         <Textarea id="data" placeholder="Paste Excel Data here..." required rows={4} onPaste={(e) => handlePaste(e)} />
       </div>
 
-      {!loading && <CsvDataTable data={data.rows} columns={data.columns} />}
+      <CsvDataTable
+        key={data.key}
+        data={data.rows.map((row) => ({ ...row, ...statusData?.get(row.id) }))}
+        columns={data.columns}
+      />
     </div>
   );
 }
