@@ -85,7 +85,6 @@ export default function Import() {
 
       await Promise.all(
         data.rows.map(async (row) => {
-          // eslint-disable-next-line @typescript-eslint/no-loop-func
           data.columns.forEach((colName) => {
             const requestFieldValue = requestFieldMapping.get(colName.accessorKey);
             if (requestFieldValue && requestFieldValue !== "Skip") {
