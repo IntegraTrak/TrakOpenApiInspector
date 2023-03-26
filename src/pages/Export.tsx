@@ -16,6 +16,7 @@ export default function Export() {
   const [data, setData] = useState<TableData>({
     columns: [],
     rows: [],
+    key: "",
   });
   const [loading, setLoading] = useState(true);
 
@@ -46,6 +47,7 @@ export default function Export() {
     setData({
       columns: [],
       rows: [],
+      key: "",
     });
     setParameterValues({});
     setSelectedFields(new Map<string, boolean>());
@@ -136,6 +138,7 @@ export default function Export() {
         setData({
           columns,
           rows,
+          key: Date.now().toString(),
         });
       }
     } catch (error) {
