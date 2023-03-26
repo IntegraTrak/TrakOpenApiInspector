@@ -8,7 +8,6 @@ import {
   OpenAPIClientAxios,
   Operation,
   AxiosRequestHeaders,
-  ParameterObject,
   UnknownParamsObject,
   AxiosError,
 } from "openapi-client-axios";
@@ -35,30 +34,13 @@ export default function Import() {
   const [operators, setOperators] = useState<Operation[]>([]);
   const [selectedOperator, setSelectedOperator] = useState<Operation>();
 
-  // Create a separate state variable to hold the status data for each row
+  const [parameterMapping, setParameterMapping] = useState<Map<string, string>>(new Map<string, string>());
+  const [requestFieldMapping, setRequestFieldMapping] = useState<Map<string, string>>(new Map<string, string>());
+
   const [statusData, setStatusData] = useState<Map<string, { resultStatusCode?: string; resultStatusText?: string }>>();
 
-  const parametersRef = useRef<Map<string, HTMLSelectElement> | null>(null);
-  const requestFieldsRef = useRef<Map<string, HTMLSelectElement> | null>(null);
-
-  function getParametersMap(): Map<string, HTMLSelectElement> {
-    if (!parametersRef.current) {
-      parametersRef.current = new Map<string, HTMLSelectElement>();
-    }
-    return parametersRef.current;
-  }
-
-  function getRequestFieldsMap(): Map<string, HTMLSelectElement> {
-    if (!requestFieldsRef.current) {
-      requestFieldsRef.current = new Map<string, HTMLSelectElement>();
-    }
-    return requestFieldsRef.current;
-  }
-
   function handleLoadAPI(definition: string | OpenAPIV3.Document | undefined) {
-    if (!definition) {
-      return;
-    }
+    if (!definition) return;
 
     const localApi = new OpenAPIClientAxios({
       definition,
@@ -70,12 +52,17 @@ export default function Import() {
     });
   }
 
+  const handleParameterMappingChange = (field: string, requestField: string) => {
+    setParameterMapping((prevParameterMapping) => new Map(prevParameterMapping).set(field, requestField));
+  };
+
+  const handleFieldMappingChange = (field: string, requestField: string) => {
+    setRequestFieldMapping((prevRequestFieldMapping) => new Map(prevRequestFieldMapping).set(field, requestField));
+  };
+
   async function importData() {
     if (!selectedOperator) return;
     if (!api) return;
-
-    const parameterMap = getParametersMap();
-    const requestFieldMap = getRequestFieldsMap();
 
     const newStatusData = new Map<string, { resultStatusCode?: string; resultStatusText?: string }>();
     setStatusData(newStatusData);
@@ -100,7 +87,7 @@ export default function Import() {
         data.rows.map(async (row) => {
           // eslint-disable-next-line @typescript-eslint/no-loop-func
           data.columns.forEach((colName) => {
-            const requestFieldValue = requestFieldMap.get(colName.accessorKey)?.value;
+            const requestFieldValue = requestFieldMapping.get(colName.accessorKey);
             if (requestFieldValue && requestFieldValue !== "Skip") {
               const requestField = { [requestFieldValue]: row[colName.accessorKey] };
               requestBody = { ...requestBody, ...requestField };
@@ -108,8 +95,8 @@ export default function Import() {
           });
 
           let parameters: object = {};
-          parameterMap.forEach((value, key) => {
-            const param = { [key]: row[value.value] };
+          parameterMapping.forEach((value, key) => {
+            const param = { [key]: row[value] };
             parameters = { ...parameters, ...param };
           });
 
@@ -129,6 +116,7 @@ export default function Import() {
             setStatusData(newStatusData);
           } catch (error) {
             const axiosError = error as AxiosError;
+            console.log(axiosError);
             newStatusData.set(row.id, {
               resultStatusCode: axiosError.response ? axiosError.response.status.toString() : "Error",
               resultStatusText: axiosError.response ? (axiosError.response.data as string) : "",
@@ -209,12 +197,15 @@ export default function Import() {
           <Textarea id="AuthHeader" placeholder="Auth..." required rows={4} onChange={(e) => onAuthHeaderChange(e)} />
         </div>
       </div>
+
       <MapFields
         loading={loading}
         columns={data.columns}
         selectedOperator={selectedOperator}
-        getParametersMap={() => getParametersMap()}
-        getRequestFieldsMap={() => getRequestFieldsMap()}
+        parameterMapping={parameterMapping}
+        onParameterMappingChange={handleParameterMappingChange}
+        requestFieldMapping={requestFieldMapping}
+        onFieldMappingChange={handleFieldMappingChange}
       />
 
       <div className="flex flex-row justify-end items-end space-x-4">

@@ -7,17 +7,21 @@ import MapRequestFieldsTable from "./MapRequestFieldsTable";
 interface MapFieldsProps {
   loading: boolean;
   selectedOperator: Operation | undefined;
-  getParametersMap: () => Map<string, HTMLSelectElement>;
   columns: TableColumn[];
-  getRequestFieldsMap: () => Map<string, HTMLSelectElement>;
+  parameterMapping: Map<string, string>;
+  onParameterMappingChange: (field: string, requestField: string) => void;
+  requestFieldMapping: Map<string, string>;
+  onFieldMappingChange: (field: string, requestField: string) => void;
 }
 
 export default function MapFields({
   loading,
   selectedOperator,
-  getParametersMap,
   columns,
-  getRequestFieldsMap,
+  parameterMapping,
+  onParameterMappingChange,
+  requestFieldMapping,
+  onFieldMappingChange,
 }: MapFieldsProps): JSX.Element {
   return (
     <div>
@@ -26,7 +30,8 @@ export default function MapFields({
           <MapParametersTable
             selectedOperatorParameters={selectedOperator.parameters}
             columns={columns}
-            getParametersMap={getParametersMap}
+            parameterMapping={parameterMapping}
+            onParameterMappingChange={onParameterMappingChange}
           />
         </div>
       )}
@@ -35,7 +40,8 @@ export default function MapFields({
           <MapRequestFieldsTable
             selectedOperatorRequestBody={selectedOperator.requestBody}
             columns={columns}
-            getRequestFieldsMap={getRequestFieldsMap}
+            requestFieldMapping={requestFieldMapping}
+            onFieldMappingChange={onFieldMappingChange}
           />
         </div>
       )}

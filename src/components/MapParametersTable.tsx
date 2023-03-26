@@ -5,14 +5,22 @@ import { TableColumn } from "./CsvDataTable";
 interface MapParametersTableProps {
   selectedOperatorParameters: (OpenAPIV3.ReferenceObject | OpenAPIV3.ParameterObject)[];
   columns: TableColumn[];
-  getParametersMap: () => Map<string, HTMLSelectElement>;
+  parameterMapping: Map<string, string>;
+  onParameterMappingChange: (field: string, requestField: string) => void;
 }
 
 export default function MapParametersTable({
   selectedOperatorParameters,
   columns,
-  getParametersMap,
+  parameterMapping,
+  onParameterMappingChange,
 }: MapParametersTableProps) {
+  const handleFieldChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    console.log(event);
+    const { id, value } = event.target;
+    onParameterMappingChange(id, value);
+  };
+
   return (
     <Table>
       <Table.Head>
@@ -25,18 +33,7 @@ export default function MapParametersTable({
           return (
             <Table.Row key={parameter.name} className="bg-white dark:border-gray-700 dark:bg-gray-800">
               <Table.Cell>
-                <Select
-                  key={parameter.name}
-                  ref={(node) => {
-                    const map = getParametersMap();
-
-                    if (node) {
-                      map.set(parameter.name, node);
-                    } else {
-                      map.delete(parameter.name);
-                    }
-                  }}
-                >
+                <Select key={parameter.name} id={parameter.name} onChange={handleFieldChange}>
                   <option aria-label="empty" />
                   {columns?.map((column) => (
                     <option key={column.Header} id={column.Header} value={column.Header}>

@@ -8,12 +8,16 @@ type FieldDef = [string, OpenAPIV3.SchemaObject];
 interface MapRequestFieldsTableProps {
   selectedOperatorRequestBody: RequestBody;
   columns: TableColumn[];
-  getRequestFieldsMap: () => Map<string, HTMLSelectElement>;
+  requestFieldMapping: Map<string, string>;
+  onFieldMappingChange: (field: string, requestField: string) => void;
 }
 
-export default function MapRequestFieldsTable(props: MapRequestFieldsTableProps) {
-  const { selectedOperatorRequestBody, columns, getRequestFieldsMap } = props;
-
+export default function MapRequestFieldsTable({
+  selectedOperatorRequestBody,
+  columns,
+  requestFieldMapping,
+  onFieldMappingChange,
+}: MapRequestFieldsTableProps) {
   function getSelectedOperationRequestProperties(): FieldDef[] {
     const schema = ("content" in selectedOperatorRequestBody &&
       selectedOperatorRequestBody.content?.["application/json"]?.schema) as OpenAPIV3.SchemaObject;
@@ -41,15 +45,11 @@ export default function MapRequestFieldsTable(props: MapRequestFieldsTableProps)
     );
   }
 
-  function handleRef(node: HTMLSelectElement | null, columnHeader: string): void {
-    const map = getRequestFieldsMap();
-
-    if (node) {
-      map.set(columnHeader, node);
-    } else {
-      map.delete(columnHeader);
-    }
-  }
+  const handleFieldChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    console.log(event);
+    const { id, value } = event.target;
+    onFieldMappingChange(id, value);
+  };
 
   return (
     <Table>
@@ -62,7 +62,7 @@ export default function MapRequestFieldsTable(props: MapRequestFieldsTableProps)
           <Table.Row key={column.Header} className="bg-white dark:border-gray-700 dark:bg-gray-800">
             <Table.Cell>{column.Header}</Table.Cell>
             <Table.Cell>
-              <Select ref={(node) => handleRef(node, column.Header)}>
+              <Select id={column.Header} onChange={handleFieldChange}>
                 <option>Skip</option>
                 {getSelectedOperationRequestProperties()
                   .filter((property: FieldDef) => !property[1].readOnly)
