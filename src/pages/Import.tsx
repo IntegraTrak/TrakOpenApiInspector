@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, ClipboardEvent, ChangeEvent } from "react";
+import { useState, useEffect, ClipboardEvent, ChangeEvent } from "react";
 import { Button, Label, Textarea } from "flowbite-react";
 import Papa from "papaparse";
 
@@ -37,7 +37,7 @@ export default function Import() {
   const [parameterMapping, setParameterMapping] = useState<Map<string, string>>(new Map<string, string>());
   const [requestFieldMapping, setRequestFieldMapping] = useState<Map<string, string>>(new Map<string, string>());
 
-  const [statusData, setStatusData] = useState<Map<string, { resultStatusCode?: string; resultStatusText?: string }>>();
+  const [statusData, setStatusData] = useState<Map<string, { resultStatusCode?: string; resultMessage?: string }>>();
 
   function handleLoadAPI(definition: string | OpenAPIV3.Document | undefined) {
     if (!definition) return;
@@ -64,16 +64,16 @@ export default function Import() {
     if (!selectedOperator) return;
     if (!api) return;
 
-    const newStatusData = new Map<string, { resultStatusCode?: string; resultStatusText?: string }>();
+    const newStatusData = new Map<string, { resultStatusCode?: string; resultMessage?: string }>();
     setStatusData(newStatusData);
 
-    const resultColumns = ["resultStatusCode", "resultStatusText"];
+    const resultColumns = ["resultStatusCode", "resultMessage"];
     const existingResultColumns = data.columns.filter((col) => resultColumns.includes(col.accessorKey));
 
     const updatedColumns = [
       ...data.columns.filter((col) => !existingResultColumns.includes(col)),
       { Header: "resultStatusCode", accessorKey: "resultStatusCode" },
-      { Header: "resultStatusText", accessorKey: "resultStatusText" },
+      { Header: "resultMessage", accessorKey: "resultMessage" },
     ];
 
     setData({ columns: updatedColumns, rows: data.rows, key: Date.now().toString() });
@@ -108,18 +108,18 @@ export default function Import() {
 
           try {
             const response = await apiClient.request(axiosConfig);
-
             newStatusData.set(row.id, {
-              resultStatusCode: response.status.toString(),
-              resultStatusText: response.statusText,
+              resultStatusCode: `${response.status.toString()} - ${response.statusText}`,
+              resultMessage: response.data ? JSON.stringify(response.data) : "",
             });
             setStatusData(newStatusData);
           } catch (error) {
             const axiosError = error as AxiosError;
-            console.log(axiosError);
             newStatusData.set(row.id, {
-              resultStatusCode: axiosError.response ? axiosError.response.status.toString() : "Error",
-              resultStatusText: axiosError.response ? (axiosError.response.data as string) : "",
+              resultStatusCode: axiosError.response
+                ? `${axiosError.response.status.toString()} - ${axiosError.response.statusText}`
+                : "Error",
+              resultMessage: axiosError.response ? (axiosError.response.data as string) : "",
             });
             setStatusData(newStatusData);
           }
@@ -202,9 +202,7 @@ export default function Import() {
         loading={loading}
         columns={data.columns}
         selectedOperator={selectedOperator}
-        parameterMapping={parameterMapping}
         onParameterMappingChange={handleParameterMappingChange}
-        requestFieldMapping={requestFieldMapping}
         onFieldMappingChange={handleFieldMappingChange}
       />
 
