@@ -85,8 +85,8 @@ export default function Import() {
 
     const updatedColumns = [
       ...data.columns.filter((col) => !existingResultColumns.includes(col)),
-      { Header: "Result Status Code", accessorKey: "resultStatusCode" },
-      { Header: "Result Status Text", accessorKey: "resultStatusText" },
+      { Header: "resultStatusCode", accessorKey: "resultStatusCode" },
+      { Header: "resultStatusText", accessorKey: "resultStatusText" },
     ];
 
     setData({ columns: updatedColumns, rows: data.rows, key: Date.now().toString() });
@@ -131,7 +131,7 @@ export default function Import() {
             const axiosError = error as AxiosError;
             newStatusData.set(row.id, {
               resultStatusCode: axiosError.response ? axiosError.response.status.toString() : "Error",
-              resultStatusText: axiosError.response ? axiosError.response.statusText : "",
+              resultStatusText: axiosError.response ? (axiosError.response.data as string) : "",
             });
             setStatusData(newStatusData);
           }
