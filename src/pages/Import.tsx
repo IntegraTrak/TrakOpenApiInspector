@@ -1,56 +1,36 @@
-import { useState, useEffect, ClipboardEvent, ChangeEvent } from "react";
+import { useState, useEffect, ClipboardEvent, ChangeEvent, useContext } from "react";
 import { Button, Label, Textarea } from "flowbite-react";
 import Papa from "papaparse";
 
 import "../App.css";
 
-import {
-  OpenAPIClientAxios,
-  Operation,
-  AxiosRequestHeaders,
-  UnknownParamsObject,
-  AxiosError,
-} from "openapi-client-axios";
-import { OpenAPIV3 } from "openapi-types";
-import OpenApiDefinition from "../components/OpenApiDefinition";
+import { Operation, AxiosRequestHeaders, UnknownParamsObject, AxiosError } from "openapi-client-axios";
 import CsvDataTable, { TableData } from "../components/CsvDataTable";
 import SelectOperator from "../components/SelectOperator";
 import MapFields from "../components/MapFields";
+import { OpenApiContextType } from "../@types/openapistate";
+import { OpenApiContext } from "../components/OpenApiContext";
 
 interface CSVData {
   [key: string]: string;
 }
 
 export default function Import() {
+  const { openApiState } = useContext(OpenApiContext) as OpenApiContextType;
+
   const [data, setData] = useState<TableData>({
     columns: [],
     rows: [],
     key: "",
   });
   const [loading, setLoading] = useState(true);
-
-  const [api, setApi] = useState<OpenAPIClientAxios>();
   const [requestHeaders, setHeaders] = useState<AxiosRequestHeaders>();
-  const [operators, setOperators] = useState<Operation[]>([]);
   const [selectedOperator, setSelectedOperator] = useState<Operation>();
 
   const [parameterMapping, setParameterMapping] = useState<Map<string, string>>(new Map<string, string>());
   const [requestFieldMapping, setRequestFieldMapping] = useState<Map<string, string>>(new Map<string, string>());
 
   const [statusData, setStatusData] = useState<Map<string, { resultStatusCode?: string; resultMessage?: string }>>();
-
-  function handleLoadAPI(definition: string | OpenAPIV3.Document | undefined) {
-    if (!definition) return;
-
-    const localApi = new OpenAPIClientAxios({
-      definition,
-    });
-    localApi.init().then(() => {
-      console.log(localApi);
-      setApi(localApi);
-      setOperators(localApi.getOperations());
-    });
-  }
 
   const handleParameterMappingChange = (field: string, requestField: string) => {
     setParameterMapping((prevParameterMapping) => new Map(prevParameterMapping).set(field, requestField));
@@ -62,7 +42,7 @@ export default function Import() {
 
   async function importData() {
     if (!selectedOperator) return;
-    if (!api) return;
+    if (!openApiState?.api) return;
 
     const newStatusData = new Map<string, { resultStatusCode?: string; resultMessage?: string }>();
     setStatusData(newStatusData);
@@ -78,7 +58,7 @@ export default function Import() {
 
     setData({ columns: updatedColumns, rows: data.rows, key: Date.now().toString() });
 
-    const apiClient = await api.getClient();
+    const apiClient = await openApiState.api.getClient();
 
     try {
       await Promise.all(
@@ -99,7 +79,7 @@ export default function Import() {
             parameters = { ...parameters, ...param };
           });
 
-          const axiosConfig = api.getAxiosConfigForOperation(selectedOperator, [
+          const axiosConfig = openApiState.api.getAxiosConfigForOperation(selectedOperator, [
             parameters as UnknownParamsObject,
             requestBody,
           ]);
@@ -163,7 +143,10 @@ export default function Import() {
 
   function operationChange(event: { target: { value: string | undefined } }): void {
     if (event.target.value) {
-      const operation: Operation = operators.filter((op) => op.operationId === event.target.value)[0];
+      if (!openApiState?.operators) return;
+      const operation: Operation = openApiState.operators.filter(
+        (op: Operation) => op.operationId === event.target.value,
+      )[0];
       setSelectedOperator(operation);
       console.log(operation);
     }
@@ -173,18 +156,18 @@ export default function Import() {
     <div>
       <h1 className="text-3xl font-bold">Trak OpenApi Inspector</h1>
 
-      <OpenApiDefinition onHandleLoadApi={(def) => handleLoadAPI(def)} />
-
       <div className="flex flex-row justify-center items-end space-x-4">
         <div className="py-2 grow">
           <div className="mb-2 block">
             <Label htmlFor="operation" value="Select operation" />
           </div>
-          <SelectOperator
-            allowedMethods={["post", "put", "delete"]}
-            operators={operators}
-            operationChange={(e) => operationChange(e)}
-          />
+          {openApiState?.operators && (
+            <SelectOperator
+              allowedMethods={["post", "put", "delete"]}
+              operators={openApiState.operators}
+              operationChange={(e) => operationChange(e)}
+            />
+          )}
         </div>
       </div>
 

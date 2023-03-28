@@ -1,18 +1,20 @@
-import { useState, useEffect, ChangeEvent } from "react";
+import { useState, useEffect, ChangeEvent, useContext } from "react";
 import { Button, Label, Textarea } from "flowbite-react";
 
 import "../App.css";
 
-import { OpenAPIClientAxios, Operation, AxiosRequestHeaders } from "openapi-client-axios";
-import { OpenAPIV3 } from "openapi-types";
-import OpenApiDefinition from "../components/OpenApiDefinition";
+import { Operation, AxiosRequestHeaders } from "openapi-client-axios";
 import CsvDataTable, { TableData, TableRow } from "../components/CsvDataTable";
 import SelectOperator from "../components/SelectOperator";
 import QueryParameters from "../components/QueryParameters";
 import SelectRequestFields from "../components/SelectRequestFields";
 import { getSchemaProperties, SchemaMap } from "../utility/OpenApiUtils";
+import { OpenApiContextType } from "../@types/openapistate";
+import { OpenApiContext } from "../components/OpenApiContext";
 
 export default function Export() {
+  const { openApiState } = useContext(OpenApiContext) as OpenApiContextType;
+
   const [data, setData] = useState<TableData>({
     columns: [],
     rows: [],
@@ -20,9 +22,7 @@ export default function Export() {
   });
   const [loading, setLoading] = useState(true);
 
-  const [api, setApi] = useState<OpenAPIClientAxios>();
   const [requestHeaders, setHeaders] = useState<AxiosRequestHeaders>();
-  const [operators, setOperators] = useState<Operation[]>([]);
   const [selectedOperator, setSelectedOperator] = useState<Operation>();
   const [selectedOperatorSchema, setSelectedOperatorSchema] = useState<SchemaMap>();
   const [parameterValues, setParameterValues] = useState<{ [key: string]: string }>({});
@@ -55,22 +55,6 @@ export default function Export() {
     if (selectedOperator) updateSchema(selectedOperator);
   }, [selectedOperator]);
 
-  function handleLoadAPI(definition: string | OpenAPIV3.Document | undefined) {
-    if (!definition) {
-      return;
-    }
-
-    const localApi = new OpenAPIClientAxios({
-      definition,
-    });
-    localApi.init().then(() => {
-      console.log(localApi);
-      setApi(localApi);
-      setOperators(localApi.getOperations());
-      setSelectedOperator(localApi.getOperations()[0]);
-    });
-  }
-
   function onAuthHeaderChange(e: ChangeEvent<HTMLTextAreaElement>): void {
     const localHeaders = {
       Authorization: e.target.value,
@@ -80,7 +64,10 @@ export default function Export() {
 
   async function operationChange(event: { target: { value: string | undefined } }): Promise<void> {
     if (event.target.value) {
-      const operation: Operation = operators.filter((op) => op.operationId === event.target.value)[0];
+      if (!openApiState?.operators) return;
+      const operation: Operation = openApiState.operators.filter(
+        (op: Operation) => op.operationId === event.target.value,
+      )[0];
       setSelectedOperator(operation);
     }
   }
@@ -94,14 +81,14 @@ export default function Export() {
   };
 
   async function exportData() {
-    if (!api || !selectedOperator) {
+    if (!openApiState?.api || !selectedOperator) {
       return;
     }
 
-    const apiClient = await api.getClient();
+    const apiClient = await openApiState.api.getClient();
 
     try {
-      const axiosConfig = api.getAxiosConfigForOperation(selectedOperator, [parameterValues]);
+      const axiosConfig = openApiState.api.getAxiosConfigForOperation(selectedOperator, [parameterValues]);
       axiosConfig.headers = { ...axiosConfig.headers, ...requestHeaders };
 
       const response = await apiClient.request(axiosConfig);
@@ -150,14 +137,18 @@ export default function Export() {
     <div>
       <h1 className="text-3xl font-bold">Trak OpenApi Inspector</h1>
 
-      <OpenApiDefinition onHandleLoadApi={(def) => handleLoadAPI(def)} />
-
       <div className="flex flex-row justify-center items-end space-x-4">
         <div className="py-2 grow">
           <div className="mb-2 block">
             <Label htmlFor="operation" value="Select operation" />
           </div>
-          <SelectOperator operators={operators} allowedMethods={["get"]} operationChange={(e) => operationChange(e)} />
+          {openApiState?.operators && (
+            <SelectOperator
+              operators={openApiState.operators}
+              allowedMethods={["get"]}
+              operationChange={(e) => operationChange(e)}
+            />
+          )}
         </div>
       </div>
 
