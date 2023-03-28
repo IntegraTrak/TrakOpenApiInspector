@@ -78,13 +78,13 @@ export default function Import() {
 
     setData({ columns: updatedColumns, rows: data.rows, key: Date.now().toString() });
 
-    const apiClient = await api.init();
+    const apiClient = await api.getClient();
 
     try {
-      let requestBody: object = {};
-
       await Promise.all(
         data.rows.map(async (row) => {
+          let requestBody: object = {};
+
           data.columns.forEach((colName) => {
             const requestFieldValue = requestFieldMapping.get(colName.accessorKey);
             if (requestFieldValue && requestFieldValue !== "Skip") {

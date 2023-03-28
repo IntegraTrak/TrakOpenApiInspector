@@ -98,7 +98,7 @@ export default function Export() {
       return;
     }
 
-    const apiClient = await api.init();
+    const apiClient = await api.getClient();
 
     try {
       const axiosConfig = api.getAxiosConfigForOperation(selectedOperator, [parameterValues]);
