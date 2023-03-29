@@ -4,19 +4,20 @@ import Papa from "papaparse";
 
 import "../App.css";
 
-import { Operation, AxiosRequestHeaders, UnknownParamsObject, AxiosError } from "openapi-client-axios";
+import { Operation, UnknownParamsObject, AxiosError, AxiosHeaders } from "openapi-client-axios";
 import CsvDataTable, { TableData } from "../components/CsvDataTable";
 import SelectOperator from "../components/SelectOperator";
 import MapFields from "../components/MapFields";
 import { OpenApiContextType } from "../@types/openapistate";
 import { OpenApiContext } from "../components/OpenApiContext";
+import TrakNavBar from "../components/TrakNavBar";
 
 interface CSVData {
   [key: string]: string;
 }
 
 export default function Import() {
-  const { openApiState } = useContext(OpenApiContext) as OpenApiContextType;
+  const { openApiState, saveOpenApiHeaders } = useContext(OpenApiContext) as OpenApiContextType;
 
   const [data, setData] = useState<TableData>({
     columns: [],
@@ -24,7 +25,6 @@ export default function Import() {
     key: "",
   });
   const [loading, setLoading] = useState(true);
-  const [requestHeaders, setHeaders] = useState<AxiosRequestHeaders>();
   const [selectedOperator, setSelectedOperator] = useState<Operation>();
 
   const [parameterMapping, setParameterMapping] = useState<Map<string, string>>(new Map<string, string>());
@@ -63,6 +63,8 @@ export default function Import() {
     try {
       await Promise.all(
         data.rows.map(async (row) => {
+          if (!openApiState.api) return;
+
           let requestBody: object = {};
 
           data.columns.forEach((colName) => {
@@ -83,7 +85,7 @@ export default function Import() {
             parameters as UnknownParamsObject,
             requestBody,
           ]);
-          axiosConfig.headers = { ...axiosConfig.headers, ...requestHeaders };
+          axiosConfig.headers = { ...axiosConfig.headers, ...openApiState.requestHeaders };
 
           try {
             const response = await apiClient.request(axiosConfig);
@@ -115,10 +117,10 @@ export default function Import() {
   }, [data]);
 
   function onAuthHeaderChange(e: ChangeEvent<HTMLTextAreaElement>): void {
-    const localHeaders = {
-      Authorization: e.target.value,
-    } as AxiosRequestHeaders;
-    setHeaders(localHeaders);
+    const authHeaderValue = e.target.value;
+    const headers = new AxiosHeaders();
+    headers.setAuthorization(authHeaderValue, true);
+    saveOpenApiHeaders(headers);
   }
 
   function handlePaste(e: ClipboardEvent<HTMLTextAreaElement>): void {
@@ -154,7 +156,7 @@ export default function Import() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold">Trak OpenApi Inspector</h1>
+      <TrakNavBar />
 
       <div className="flex flex-row justify-center items-end space-x-4">
         <div className="py-2 grow">
@@ -176,7 +178,14 @@ export default function Import() {
           <div className="mb-2 block">
             <Label htmlFor="AuthHeader" value="Authorization Header" />
           </div>
-          <Textarea id="AuthHeader" placeholder="Auth..." required rows={4} onChange={(e) => onAuthHeaderChange(e)} />
+          <Textarea
+            id="AuthHeader"
+            value={openApiState?.requestHeaders?.getAuthorization() ?? ""}
+            placeholder="Auth..."
+            required
+            rows={4}
+            onChange={(e) => onAuthHeaderChange(e)}
+          />
         </div>
       </div>
 

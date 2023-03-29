@@ -3,7 +3,7 @@ import { Button, Label, Textarea } from "flowbite-react";
 
 import "../App.css";
 
-import { Operation, AxiosRequestHeaders } from "openapi-client-axios";
+import { Operation, AxiosHeaders } from "openapi-client-axios";
 import CsvDataTable, { TableData, TableRow } from "../components/CsvDataTable";
 import SelectOperator from "../components/SelectOperator";
 import QueryParameters from "../components/QueryParameters";
@@ -11,9 +11,10 @@ import SelectRequestFields from "../components/SelectRequestFields";
 import { getSchemaProperties, SchemaMap } from "../utility/OpenApiUtils";
 import { OpenApiContextType } from "../@types/openapistate";
 import { OpenApiContext } from "../components/OpenApiContext";
+import TrakNavBar from "../components/TrakNavBar";
 
 export default function Export() {
-  const { openApiState } = useContext(OpenApiContext) as OpenApiContextType;
+  const { openApiState, saveOpenApiHeaders } = useContext(OpenApiContext) as OpenApiContextType;
 
   const [data, setData] = useState<TableData>({
     columns: [],
@@ -22,7 +23,6 @@ export default function Export() {
   });
   const [loading, setLoading] = useState(true);
 
-  const [requestHeaders, setHeaders] = useState<AxiosRequestHeaders>();
   const [selectedOperator, setSelectedOperator] = useState<Operation>();
   const [selectedOperatorSchema, setSelectedOperatorSchema] = useState<SchemaMap>();
   const [parameterValues, setParameterValues] = useState<{ [key: string]: string }>({});
@@ -56,10 +56,10 @@ export default function Export() {
   }, [selectedOperator]);
 
   function onAuthHeaderChange(e: ChangeEvent<HTMLTextAreaElement>): void {
-    const localHeaders = {
-      Authorization: e.target.value,
-    } as AxiosRequestHeaders;
-    setHeaders(localHeaders);
+    const authHeaderValue = e.target.value;
+    const headers = new AxiosHeaders();
+    headers.setAuthorization(authHeaderValue, true);
+    saveOpenApiHeaders(headers);
   }
 
   async function operationChange(event: { target: { value: string | undefined } }): Promise<void> {
@@ -89,7 +89,7 @@ export default function Export() {
 
     try {
       const axiosConfig = openApiState.api.getAxiosConfigForOperation(selectedOperator, [parameterValues]);
-      axiosConfig.headers = { ...axiosConfig.headers, ...requestHeaders };
+      axiosConfig.headers = { ...axiosConfig.headers, ...openApiState.requestHeaders };
 
       const response = await apiClient.request(axiosConfig);
       if (response.status === 200 && selectedOperatorSchema) {
@@ -135,7 +135,7 @@ export default function Export() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold">Trak OpenApi Inspector</h1>
+      <TrakNavBar />
 
       <div className="flex flex-row justify-center items-end space-x-4">
         <div className="py-2 grow">
@@ -157,7 +157,14 @@ export default function Export() {
           <div className="mb-2 block">
             <Label htmlFor="AuthHeader" value="Authorization Header" />
           </div>
-          <Textarea id="AuthHeader" placeholder="Auth..." required rows={4} onChange={(e) => onAuthHeaderChange(e)} />
+          <Textarea
+            id="AuthHeader"
+            value={openApiState?.requestHeaders?.getAuthorization() ?? ""}
+            placeholder="Auth..."
+            required
+            rows={4}
+            onChange={(e) => onAuthHeaderChange(e)}
+          />
         </div>
       </div>
 
