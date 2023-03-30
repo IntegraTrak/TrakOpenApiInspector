@@ -4,13 +4,13 @@ import { TableColumn } from "./CsvDataTable";
 import MapParametersTable from "./MapParametersTable";
 import MapRequestFieldsTable from "./MapRequestFieldsTable";
 
-interface MapFieldsProps {
+type MapFieldsProps = {
   loading: boolean;
   selectedOperator: Operation | undefined;
   columns: TableColumn[];
   onParameterMappingChange: (field: string, requestField: string) => void;
   onFieldMappingChange: (field: string, requestField: string) => void;
-}
+};
 
 export default function MapFields({
   loading,

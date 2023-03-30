@@ -5,9 +5,9 @@ import { OpenApiContextType } from "../@types/openapistate";
 import { loadApiAsync } from "../utility/OpenApiUtils";
 import { OpenApiContext } from "./OpenApiContext";
 
-interface OpenApiDefinitionHistoryProps {
+type OpenApiDefinitionHistoryProps = {
   onApiSelect: (definition: OpenAPIV3.Document | undefined) => void;
-}
+};
 
 export default function OpenApiDefinitionHistory({ onApiSelect }: OpenApiDefinitionHistoryProps): JSX.Element {
   const { openApiState, saveOpenApiState } = useContext(OpenApiContext) as OpenApiContextType;

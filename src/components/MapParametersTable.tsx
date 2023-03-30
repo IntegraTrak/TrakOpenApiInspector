@@ -2,11 +2,11 @@ import { Select, Table } from "flowbite-react";
 import { OpenAPIV3 } from "openapi-client-axios";
 import { TableColumn } from "./CsvDataTable";
 
-interface MapParametersTableProps {
+type MapParametersTableProps = {
   selectedOperatorParameters: (OpenAPIV3.ReferenceObject | OpenAPIV3.ParameterObject)[];
   columns: TableColumn[];
   onParameterMappingChange: (field: string, requestField: string) => void;
-}
+};
 
 export default function MapParametersTable({
   selectedOperatorParameters,

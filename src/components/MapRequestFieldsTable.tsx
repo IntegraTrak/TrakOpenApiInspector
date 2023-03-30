@@ -5,11 +5,11 @@ import { TableColumn } from "./CsvDataTable";
 type RequestBody = OpenAPIV3.ReferenceObject | OpenAPIV3.RequestBodyObject;
 type FieldDef = [string, OpenAPIV3.SchemaObject];
 
-interface MapRequestFieldsTableProps {
+type MapRequestFieldsTableProps = {
   selectedOperatorRequestBody: RequestBody;
   columns: TableColumn[];
   onFieldMappingChange: (field: string, requestField: string) => void;
-}
+};
 
 export default function MapRequestFieldsTable({
   selectedOperatorRequestBody,

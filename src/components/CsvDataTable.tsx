@@ -12,27 +12,27 @@ import { useVirtualizer, Virtualizer } from "@tanstack/react-virtual";
 import { Button } from "flowbite-react";
 import Papa from "papaparse";
 
-export interface TableColumn {
+export type TableColumn = {
   Header: string;
   accessorKey: string;
   accessorFn?: (row: TableRow) => string;
-}
+};
 
-export interface TableRow {
+export type TableRow = {
   [key: string]: string;
-}
+};
 
-export interface TableData {
+export type TableData = {
   columns: TableColumn[];
   rows: TableRow[];
   key: string;
-}
+};
 
-interface CsvDataTableProps {
+type CsvDataTableProps = {
   data: TableRow[];
   columns: TableColumn[];
   selectedFields?: Map<string, boolean>;
-}
+};
 
 export default function CsvDataTable({
   data,

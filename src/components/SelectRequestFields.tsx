@@ -3,11 +3,11 @@ import { OpenAPIV3 } from "openapi-types";
 
 type SchemaMap = Map<string, OpenAPIV3.SchemaObject>;
 
-interface SelectRequestFieldsProps {
+type SelectRequestFieldsProps = {
   schemaMap: SchemaMap;
   selectedFields: Map<string, boolean>;
   onFieldChange: (field: string, checked: boolean) => void;
-}
+};
 
 export default function SelectRequestFields({ schemaMap, selectedFields, onFieldChange }: SelectRequestFieldsProps) {
   if (!schemaMap) {

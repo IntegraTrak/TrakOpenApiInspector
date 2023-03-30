@@ -2,11 +2,11 @@ import React from "react";
 import { Select } from "flowbite-react";
 import { Operation } from "openapi-client-axios";
 
-interface SelectOperatorProps {
+type SelectOperatorProps = {
   operators: Operation[];
   allowedMethods: string[];
   operationChange: (event: React.ChangeEvent<HTMLSelectElement>) => void;
-}
+};
 
 export default function SelectOperator({ operators, allowedMethods, operationChange }: SelectOperatorProps) {
   return (

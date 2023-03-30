@@ -4,9 +4,9 @@ import { TextInput, Label, Button, Textarea } from "flowbite-react";
 
 import { OpenAPIV3 } from "openapi-types";
 
-interface OpenApiDefinitionProps {
+type OpenApiDefinitionProps = {
   onHandleLoadApi: (definition: string | OpenAPIV3.Document | undefined) => void;
-}
+};
 
 export default function OpenApiDefinition({ onHandleLoadApi }: OpenApiDefinitionProps): JSX.Element {
   const refOpenApiUri = useRef<HTMLInputElement>(null);

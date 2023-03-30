@@ -1,11 +1,11 @@
 import { Table, TextInput } from "flowbite-react";
 import { OpenAPIV3 } from "openapi-types";
 
-interface QueryParametersProps {
+type QueryParametersProps = {
   selectedOperatorParameters: (OpenAPIV3.ReferenceObject | OpenAPIV3.ParameterObject)[];
   parameterValues: { [key: string]: string };
   onParameterValuesChange: (parameterValues: { [key: string]: string }) => void;
-}
+};
 
 export default function QueryParameters({
   selectedOperatorParameters,
