@@ -1,16 +1,17 @@
 import { Select } from "flowbite-react";
 import { OpenAPIV3 } from "openapi-types";
-import { useContext } from "react";
-import { OpenApiContextType } from "../@types/openapistate";
+import { useAtom } from "jotai";
 import { loadApiAsync } from "../utility/OpenApiUtils";
-import { OpenApiContext } from "./OpenApiContext";
+import { baseOpenApiAtom, openApiHeadersAtom } from "./OpenApiState";
 
 type OpenApiDefinitionHistoryProps = {
   onApiSelect: (definition: OpenAPIV3.Document | undefined) => void;
 };
 
 export default function OpenApiDefinitionHistory({ onApiSelect }: OpenApiDefinitionHistoryProps): JSX.Element {
-  const { openApiState, saveOpenApiState } = useContext(OpenApiContext) as OpenApiContextType;
+  const [, setApi] = useAtom(baseOpenApiAtom);
+  const [requestHeaders] = useAtom(openApiHeadersAtom);
+
   const items = { ...localStorage };
 
   function getApiDefinition(selectedValue: string): OpenAPIV3.Document | undefined {
@@ -23,9 +24,9 @@ export default function OpenApiDefinitionHistory({ onApiSelect }: OpenApiDefinit
     const selectedValue = event.target.value;
     const definition = getApiDefinition(selectedValue);
     if (!definition) return;
-    const api = await loadApiAsync(definition, openApiState?.requestHeaders ?? undefined);
-    if (api) {
-      saveOpenApiState(api, api.getOperations());
+    const localApi = await loadApiAsync(definition, requestHeaders);
+    if (localApi) {
+      setApi(localApi);
     }
 
     onApiSelect(definition);

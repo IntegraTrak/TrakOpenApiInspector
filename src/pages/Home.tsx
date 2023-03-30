@@ -1,21 +1,22 @@
 import { Label, Textarea } from "flowbite-react";
 import { AxiosHeaders, OpenAPIV3 } from "openapi-client-axios";
-import { ChangeEvent, useContext } from "react";
-import { OpenApiContextType } from "../@types/openapistate";
-import { OpenApiContext } from "../components/OpenApiContext";
+import { ChangeEvent } from "react";
+import { useAtom } from "jotai";
 import OpenApiDefinition from "../components/OpenApiDefinition";
 import OpenApiDefinitionHistory from "../components/OpenApiDefinitionHistory";
 import TrakNavBar from "../components/TrakNavBar";
 import { loadApiAsync } from "../utility/OpenApiUtils";
+import { openApiAtom, openApiHeadersAtom } from "../components/OpenApiState";
 
 export default function Home() {
-  const { openApiState, saveOpenApiState, saveOpenApiHeaders } = useContext(OpenApiContext) as OpenApiContextType;
+  const [, setApi] = useAtom(openApiAtom);
+  const [requestHeaders, setRequestHeaders] = useAtom(openApiHeadersAtom);
 
   async function handleLoadAPI(definition: string | OpenAPIV3.Document | undefined) {
     if (!definition) return;
-    const api = await loadApiAsync(definition, openApiState?.requestHeaders ?? undefined);
-    if (api) {
-      saveOpenApiState(api, api.getOperations());
+    const localApi = await loadApiAsync(definition, requestHeaders ?? undefined);
+    if (localApi) {
+      setApi(localApi);
     }
   }
 
@@ -27,7 +28,7 @@ export default function Home() {
     const authHeaderValue = e.target.value;
     const headers = new AxiosHeaders();
     headers.setAuthorization(authHeaderValue, true);
-    saveOpenApiHeaders(headers);
+    setRequestHeaders(headers);
   }
 
   return (
@@ -44,7 +45,7 @@ export default function Home() {
 
           <Textarea
             id="AuthHeader"
-            value={openApiState?.requestHeaders?.getAuthorization() ?? ""}
+            value={requestHeaders?.getAuthorization() ?? ""}
             placeholder="Auth..."
             required
             rows={4}

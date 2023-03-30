@@ -1,21 +1,23 @@
-import { useState, useEffect, ChangeEvent, useContext } from "react";
+import { useState, useEffect, ChangeEvent } from "react";
 import { Button, Label, Textarea } from "flowbite-react";
 
 import "../App.css";
 
 import { Operation, AxiosHeaders, OpenAPIV3 } from "openapi-client-axios";
+import { useAtom } from "jotai";
 import CsvDataTable, { TableData, TableRow } from "../components/CsvDataTable";
 import SelectOperator from "../components/SelectOperator";
 import QueryParameters from "../components/QueryParameters";
 import SelectRequestFields from "../components/SelectRequestFields";
 import { getSchemaProperties, SchemaMap } from "../utility/OpenApiUtils";
-import { OpenApiContextType } from "../@types/openapistate";
-import { OpenApiContext } from "../components/OpenApiContext";
 import TrakNavBar from "../components/TrakNavBar";
 import OpenApiDefinitionHistory from "../components/OpenApiDefinitionHistory";
+import { openApiAtom, openApiHeadersAtom, openApiOperationsAtom } from "../components/OpenApiState";
 
 export default function Export() {
-  const { openApiState, saveOpenApiHeaders } = useContext(OpenApiContext) as OpenApiContextType;
+  const [api] = useAtom(openApiAtom);
+  const [operators] = useAtom(openApiOperationsAtom);
+  const [requestHeaders, setRequestHeaders] = useAtom(openApiHeadersAtom);
 
   const [data, setData] = useState<TableData>({
     columns: [],
@@ -64,15 +66,13 @@ export default function Export() {
     const authHeaderValue = e.target.value;
     const headers = new AxiosHeaders();
     headers.setAuthorization(authHeaderValue, true);
-    saveOpenApiHeaders(headers);
+    setRequestHeaders(headers);
   }
 
   async function operationChange(event: { target: { value: string | undefined } }): Promise<void> {
     if (event.target.value) {
-      if (!openApiState?.operators) return;
-      const operation: Operation = openApiState.operators.filter(
-        (op: Operation) => op.operationId === event.target.value,
-      )[0];
+      if (!operators) return;
+      const operation: Operation = operators.filter((op: Operation) => op.operationId === event.target.value)[0];
       setSelectedOperator(operation);
     }
   }
@@ -86,15 +86,15 @@ export default function Export() {
   };
 
   async function exportData() {
-    if (!openApiState?.api || !selectedOperator) {
+    if (!api || !selectedOperator) {
       return;
     }
 
-    const apiClient = await openApiState.api.getClient();
+    const apiClient = await api.getClient();
 
     try {
-      const axiosConfig = openApiState.api.getAxiosConfigForOperation(selectedOperator, [parameterValues]);
-      axiosConfig.headers = { ...axiosConfig.headers, ...openApiState.requestHeaders };
+      const axiosConfig = api.getAxiosConfigForOperation(selectedOperator, [parameterValues]);
+      axiosConfig.headers = { ...axiosConfig.headers, ...requestHeaders };
 
       const response = await apiClient.request(axiosConfig);
       if (response.status === 200 && selectedOperatorSchema) {
@@ -147,9 +147,9 @@ export default function Export() {
           <div className="mb-2 block">
             <Label htmlFor="operation" value="Select operation" />
           </div>
-          {openApiState?.operators && (
+          {operators && (
             <SelectOperator
-              operators={openApiState.operators}
+              operators={operators}
               allowedMethods={["get"]}
               operationChange={(e) => operationChange(e)}
             />
@@ -164,7 +164,7 @@ export default function Export() {
           </div>
           <Textarea
             id="AuthHeader"
-            value={openApiState?.requestHeaders?.getAuthorization() ?? ""}
+            value={requestHeaders?.getAuthorization() ?? ""}
             placeholder="Auth..."
             required
             rows={4}

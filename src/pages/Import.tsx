@@ -1,24 +1,26 @@
-import { useState, useEffect, ClipboardEvent, ChangeEvent, useContext } from "react";
+import { useState, useEffect, ClipboardEvent, ChangeEvent } from "react";
 import { Button, Label, Textarea } from "flowbite-react";
 import Papa from "papaparse";
 
 import "../App.css";
 
 import { Operation, UnknownParamsObject, AxiosError, AxiosHeaders, OpenAPIV3 } from "openapi-client-axios";
+import { useAtom } from "jotai";
 import CsvDataTable, { TableData } from "../components/CsvDataTable";
 import SelectOperator from "../components/SelectOperator";
 import MapFields from "../components/MapFields";
-import { OpenApiContextType } from "../@types/openapistate";
-import { OpenApiContext } from "../components/OpenApiContext";
 import TrakNavBar from "../components/TrakNavBar";
 import OpenApiDefinitionHistory from "../components/OpenApiDefinitionHistory";
+import { openApiAtom, openApiHeadersAtom, openApiOperationsAtom } from "../components/OpenApiState";
 
 interface CSVData {
   [key: string]: string;
 }
 
 export default function Import() {
-  const { openApiState, saveOpenApiHeaders } = useContext(OpenApiContext) as OpenApiContextType;
+  const [api] = useAtom(openApiAtom);
+  const [operators] = useAtom(openApiOperationsAtom);
+  const [requestHeaders, setRequestHeaders] = useAtom(openApiHeadersAtom);
 
   const [data, setData] = useState<TableData>({
     columns: [],
@@ -47,7 +49,7 @@ export default function Import() {
 
   async function importData() {
     if (!selectedOperator) return;
-    if (!openApiState?.api) return;
+    if (!api) return;
 
     const newStatusData = new Map<string, { resultStatusCode?: string; resultMessage?: string }>();
     setStatusData(newStatusData);
@@ -63,12 +65,12 @@ export default function Import() {
 
     setData({ columns: updatedColumns, rows: data.rows, key: Date.now().toString() });
 
-    const apiClient = await openApiState.api.getClient();
+    const apiClient = await api.getClient();
 
     try {
       await Promise.all(
         data.rows.map(async (row) => {
-          if (!openApiState.api) return;
+          if (!api) return;
 
           let requestBody: object = {};
 
@@ -86,11 +88,11 @@ export default function Import() {
             parameters = { ...parameters, ...param };
           });
 
-          const axiosConfig = openApiState.api.getAxiosConfigForOperation(selectedOperator, [
+          const axiosConfig = api.getAxiosConfigForOperation(selectedOperator, [
             parameters as UnknownParamsObject,
             requestBody,
           ]);
-          axiosConfig.headers = { ...axiosConfig.headers, ...openApiState.requestHeaders };
+          axiosConfig.headers = { ...axiosConfig.headers, ...requestHeaders };
 
           try {
             const response = await apiClient.request(axiosConfig);
@@ -125,7 +127,7 @@ export default function Import() {
     const authHeaderValue = e.target.value;
     const headers = new AxiosHeaders();
     headers.setAuthorization(authHeaderValue, true);
-    saveOpenApiHeaders(headers);
+    setRequestHeaders(headers);
   }
 
   function handlePaste(e: ClipboardEvent<HTMLTextAreaElement>): void {
@@ -150,10 +152,8 @@ export default function Import() {
 
   function operationChange(event: { target: { value: string | undefined } }): void {
     if (event.target.value) {
-      if (!openApiState?.operators) return;
-      const operation: Operation = openApiState.operators.filter(
-        (op: Operation) => op.operationId === event.target.value,
-      )[0];
+      if (!operators) return;
+      const operation: Operation = operators.filter((op: Operation) => op.operationId === event.target.value)[0];
       setSelectedOperator(operation);
       console.log(operation);
     }
@@ -168,10 +168,10 @@ export default function Import() {
           <div className="mb-2 block">
             <Label htmlFor="operation" value="Select operation" />
           </div>
-          {openApiState?.operators && (
+          {operators && (
             <SelectOperator
               allowedMethods={["post", "put", "delete"]}
-              operators={openApiState.operators}
+              operators={operators}
               operationChange={(e) => operationChange(e)}
             />
           )}
@@ -185,7 +185,7 @@ export default function Import() {
           </div>
           <Textarea
             id="AuthHeader"
-            value={openApiState?.requestHeaders?.getAuthorization() ?? ""}
+            value={requestHeaders?.getAuthorization() ?? ""}
             placeholder="Auth..."
             required
             rows={4}
