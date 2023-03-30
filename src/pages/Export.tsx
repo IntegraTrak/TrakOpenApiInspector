@@ -3,7 +3,7 @@ import { Button, Label, Textarea } from "flowbite-react";
 
 import "../App.css";
 
-import { Operation, AxiosHeaders } from "openapi-client-axios";
+import { Operation, AxiosHeaders, OpenAPIV3 } from "openapi-client-axios";
 import CsvDataTable, { TableData, TableRow } from "../components/CsvDataTable";
 import SelectOperator from "../components/SelectOperator";
 import QueryParameters from "../components/QueryParameters";
@@ -12,6 +12,7 @@ import { getSchemaProperties, SchemaMap } from "../utility/OpenApiUtils";
 import { OpenApiContextType } from "../@types/openapistate";
 import { OpenApiContext } from "../components/OpenApiContext";
 import TrakNavBar from "../components/TrakNavBar";
+import OpenApiDefinitionHistory from "../components/OpenApiDefinitionHistory";
 
 export default function Export() {
   const { openApiState, saveOpenApiHeaders } = useContext(OpenApiContext) as OpenApiContextType;
@@ -54,6 +55,10 @@ export default function Export() {
 
     if (selectedOperator) updateSchema(selectedOperator);
   }, [selectedOperator]);
+
+  async function onApiSelect(definition: string | OpenAPIV3.Document | undefined) {
+    console.log(definition);
+  }
 
   function onAuthHeaderChange(e: ChangeEvent<HTMLTextAreaElement>): void {
     const authHeaderValue = e.target.value;
@@ -136,7 +141,7 @@ export default function Export() {
   return (
     <div>
       <TrakNavBar />
-
+      <OpenApiDefinitionHistory onApiSelect={(def) => onApiSelect(def)} />
       <div className="flex flex-row justify-center items-end space-x-4">
         <div className="py-2 grow">
           <div className="mb-2 block">

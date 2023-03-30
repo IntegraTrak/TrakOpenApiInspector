@@ -1,29 +1,26 @@
 import { Label, Textarea } from "flowbite-react";
-import OpenAPIClientAxios, { AxiosHeaders, OpenAPIV3 } from "openapi-client-axios";
+import { AxiosHeaders, OpenAPIV3 } from "openapi-client-axios";
 import { ChangeEvent, useContext } from "react";
 import { OpenApiContextType } from "../@types/openapistate";
 import { OpenApiContext } from "../components/OpenApiContext";
 import OpenApiDefinition from "../components/OpenApiDefinition";
+import OpenApiDefinitionHistory from "../components/OpenApiDefinitionHistory";
 import TrakNavBar from "../components/TrakNavBar";
+import { loadApiAsync } from "../utility/OpenApiUtils";
 
 export default function Home() {
   const { openApiState, saveOpenApiState, saveOpenApiHeaders } = useContext(OpenApiContext) as OpenApiContextType;
 
-  function handleLoadAPI(definition: string | OpenAPIV3.Document | undefined) {
+  async function handleLoadAPI(definition: string | OpenAPIV3.Document | undefined) {
     if (!definition) return;
+    const api = await loadApiAsync(definition, openApiState?.requestHeaders ?? undefined);
+    if (api) {
+      saveOpenApiState(api, api.getOperations());
+    }
+  }
 
-    console.log(openApiState?.requestHeaders);
-
-    const localApi = new OpenAPIClientAxios({
-      definition,
-      axiosConfigDefaults: {
-        headers: openApiState?.requestHeaders,
-      },
-    });
-    localApi.init().then(() => {
-      console.log(localApi);
-      saveOpenApiState(localApi, localApi.getOperations());
-    });
+  async function onApiSelect(definition: string | OpenAPIV3.Document | undefined) {
+    console.log(definition);
   }
 
   function onAuthHeaderChange(e: ChangeEvent<HTMLTextAreaElement>): void {
@@ -36,6 +33,7 @@ export default function Home() {
   return (
     <div className="App">
       <TrakNavBar />
+      <OpenApiDefinitionHistory onApiSelect={(def) => onApiSelect(def)} />
       <OpenApiDefinition onHandleLoadApi={(def) => handleLoadAPI(def)} />
 
       <div className="flex flex-row justify-center items-end space-x-4">

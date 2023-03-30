@@ -4,13 +4,14 @@ import Papa from "papaparse";
 
 import "../App.css";
 
-import { Operation, UnknownParamsObject, AxiosError, AxiosHeaders } from "openapi-client-axios";
+import { Operation, UnknownParamsObject, AxiosError, AxiosHeaders, OpenAPIV3 } from "openapi-client-axios";
 import CsvDataTable, { TableData } from "../components/CsvDataTable";
 import SelectOperator from "../components/SelectOperator";
 import MapFields from "../components/MapFields";
 import { OpenApiContextType } from "../@types/openapistate";
 import { OpenApiContext } from "../components/OpenApiContext";
 import TrakNavBar from "../components/TrakNavBar";
+import OpenApiDefinitionHistory from "../components/OpenApiDefinitionHistory";
 
 interface CSVData {
   [key: string]: string;
@@ -31,6 +32,10 @@ export default function Import() {
   const [requestFieldMapping, setRequestFieldMapping] = useState<Map<string, string>>(new Map<string, string>());
 
   const [statusData, setStatusData] = useState<Map<string, { resultStatusCode?: string; resultMessage?: string }>>();
+
+  async function onApiSelect(definition: string | OpenAPIV3.Document | undefined) {
+    console.log(definition);
+  }
 
   const handleParameterMappingChange = (field: string, requestField: string) => {
     setParameterMapping((prevParameterMapping) => new Map(prevParameterMapping).set(field, requestField));
@@ -157,7 +162,7 @@ export default function Import() {
   return (
     <div>
       <TrakNavBar />
-
+      <OpenApiDefinitionHistory onApiSelect={(def) => onApiSelect(def)} />
       <div className="flex flex-row justify-center items-end space-x-4">
         <div className="py-2 grow">
           <div className="mb-2 block">

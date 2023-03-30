@@ -1,5 +1,5 @@
 import { OpenAPIV3 } from "openapi-types";
-import { Operation } from "openapi-client-axios";
+import OpenAPIClientAxios, { AxiosHeaders, Operation } from "openapi-client-axios";
 
 type FieldDef = [string, OpenAPIV3.SchemaObject];
 export type SchemaMap = Map<string, OpenAPIV3.SchemaObject>;
@@ -96,4 +96,24 @@ export const getSchemaProperties = (schema: OpenAPIV3.SchemaObject): SchemaMap =
     return getNestedSchemaProperties(parsedSchema, "");
   }
   return propertiesMap;
+};
+
+export const loadApiAsync = async (
+  definition: string | OpenAPIV3.Document,
+  requestHeaders: AxiosHeaders | undefined,
+): Promise<OpenAPIClientAxios | undefined> => {
+  const localApi = new OpenAPIClientAxios({
+    definition,
+    axiosConfigDefaults: {
+      headers: requestHeaders,
+    },
+  });
+
+  try {
+    await localApi.init();
+    return localApi;
+  } catch (e) {
+    console.error(e);
+    return undefined;
+  }
 };

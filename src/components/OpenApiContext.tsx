@@ -11,6 +11,8 @@ export default function OpenApiContextProvider({ children }: { children: React.R
     setOpenApiState((prevState) => {
       return { ...prevState, api, operators };
     });
+    const { title } = api.definition.info;
+    localStorage.setItem(`apidef:${title}`, JSON.stringify(api.document));
   };
 
   const saveOpenApiHeaders = (requestHeaders: AxiosRequestHeaders) => {
