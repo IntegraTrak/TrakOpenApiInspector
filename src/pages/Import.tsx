@@ -76,9 +76,31 @@ export default function Import() {
 
           data.columns.forEach((colName) => {
             const requestFieldValue = requestFieldMapping.get(colName.accessorKey);
-            if (requestFieldValue && requestFieldValue !== "Skip") {
-              const requestField = { [requestFieldValue]: row[colName.accessorKey] };
-              requestBody = { ...requestBody, ...requestField };
+            console.log(requestFieldValue);
+            if (requestFieldValue && requestFieldValue !== "Skip" && row[colName.accessorKey] !== "NULL") {
+              const fieldValue = row[colName.accessorKey];
+              let requestField: object;
+              if (requestFieldValue.includes(".")) {
+                const keys = requestFieldValue.split(".");
+                let nestedObject = { [keys[keys.length - 1]]: fieldValue };
+                for (let i = keys.length - 2; i >= 0; i -= 1) {
+                  nestedObject = { [keys[i]]: nestedObject };
+                }
+                requestField = nestedObject;
+
+                // Add the nested object to the request body
+                let currentObject = requestBody;
+                for (let i = 0; i < keys.length - 1; i += 1) {
+                  if (!Object.prototype.hasOwnProperty.call(currentObject, keys[i])) {
+                    currentObject[keys[i]] = {};
+                  }
+                  currentObject = currentObject[keys[i]];
+                }
+                currentObject[keys[keys.length - 1]] = fieldValue;
+              } else {
+                requestField = { [requestFieldValue]: fieldValue };
+                requestBody = { ...requestBody, ...requestField };
+              }
             }
           });
 
@@ -134,8 +156,11 @@ export default function Import() {
     const text = e.clipboardData.getData("text/plain");
     e.preventDefault();
 
+    console.log(text);
+
     Papa.parse(text, {
       header: true,
+      delimiter: "\t",
       skipEmptyLines: true,
       complete: (results) => {
         const csvData: CSVData[] = results.data as CSVData[];
@@ -143,7 +168,10 @@ export default function Import() {
           Header: key,
           accessorKey: key,
         }));
-        const rows = csvData.map((item) => ({ ...item }));
+        const rows = csvData.map((item) => {
+          console.log(item);
+          return { ...item };
+        });
 
         setData({ columns, rows, key: Date.now().toString() });
       },
@@ -170,7 +198,7 @@ export default function Import() {
           </div>
           {operators && (
             <SelectOperator
-              allowedMethods={["post", "put", "delete"]}
+              allowedMethods={["post", "put", "patch", "delete"]}
               operators={operators}
               operationChange={(e) => operationChange(e)}
             />
