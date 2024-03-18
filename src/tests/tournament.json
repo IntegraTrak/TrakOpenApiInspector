@@ -1,0 +1,131 @@
+{
+    "tags": [
+        "Tournament"
+    ],
+    "operationId": "GetAllTournaments",
+    "responses": {
+        "200": {
+            "description": "",
+            "content": {
+                "application/json": {
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                                "id": {
+                                    "type": "string",
+                                    "format": "guid"
+                                },
+                                "name": {
+                                    "type": "string",
+                                    "nullable": true
+                                },
+                                "startAt": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "nullable": true
+                                },
+                                "endOn": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "nullable": true
+                                },
+                                "description": {
+                                    "type": "string",
+                                    "nullable": true
+                                },
+                                "recurrenceRule": {
+                                    "type": "string",
+                                    "nullable": true
+                                },
+                                "location": {
+                                    "type": "string",
+                                    "format": "guid",
+                                    "nullable": true
+                                },
+                                "buyIn": {
+                                    "type": "number",
+                                    "format": "decimal",
+                                    "nullable": true
+                                },
+                                "rake": {
+                                    "type": "number",
+                                    "format": "decimal",
+                                    "nullable": true
+                                },
+                                "format": {
+                                    "type": "string",
+                                    "nullable": true
+                                },
+                                "gameType": {
+                                    "type": "string",
+                                    "nullable": true
+                                },
+                                "locationNavigation": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "properties": {
+                                        "id": {
+                                            "type": "string",
+                                            "format": "guid"
+                                        },
+                                        "name": {
+                                            "type": "string",
+                                            "nullable": true
+                                        },
+                                        "tournaments": {
+                                            "type": "array"
+                                        }
+                                    }
+                                },
+                                "tournamentDays": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "additionalProperties": false,
+                                        "properties": {
+                                            "id": {
+                                                "type": "string",
+                                                "format": "guid"
+                                            },
+                                            "name": {
+                                                "type": "string",
+                                                "nullable": true
+                                            },
+                                            "startAt": {
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "nullable": true
+                                            },
+                                            "finishText": {
+                                                "type": "string"
+                                            },
+                                            "description": {
+                                                "type": "string",
+                                                "nullable": true
+                                            },
+                                            "tournament": {
+                                                "type": "string",
+                                                "format": "guid",
+                                                "nullable": true
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "path": "/api/Tournament",
+    "method": "get",
+    "security": [
+        {
+            "bearer": []
+        }
+    ]
+}
