@@ -86,6 +86,8 @@ export default function Export() {
   };
 
   async function exportData() {
+    console.log(api);
+    console.log(selectedOperator);
     if (!api || !selectedOperator) {
       return;
     }
@@ -97,6 +99,7 @@ export default function Export() {
       axiosConfig.headers = { ...axiosConfig.headers, ...requestHeaders };
 
       const response = await apiClient.request(axiosConfig);
+      console.log(response);
       if (response.status === 200 && selectedOperatorSchema) {
         let responseData = response.data;
         if (!Array.isArray(responseData)) {
